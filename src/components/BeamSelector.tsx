@@ -1,6 +1,7 @@
 import { List, ListItemButton, ListItemText, Typography, Paper } from '@mui/material';
 import type { BeamProperties } from '../data/beamProperties';
 import { standardBeams } from '../data/beamProperties';
+import { useState } from 'react';
 
 interface BeamSelectorProps {
   onSelect: (beam: BeamProperties) => void;
@@ -8,6 +9,24 @@ interface BeamSelectorProps {
 }
 
 export function BeamSelector({ onSelect, selectedBeam }: BeamSelectorProps) {
+  const [isAwake, setIsAwake] = useState(false);
+
+  if (!isAwake) {
+    return (
+      <Paper elevation={2} sx={{ width: '100%', p: 2, textAlign: 'center', borderRadius: 0, bgcolor: 'background.paper' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: 14, letterSpacing: 1, mb: 2 }}>
+          Standard W-Beams (Sleeping)
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Click to wake the beam selector.
+        </Typography>
+        <ListItemButton onClick={() => setIsAwake(true)} sx={{ mx: 'auto', width: 'fit-content', bgcolor: 'primary.light', color: 'primary.contrastText', borderRadius: 1 }}>
+          <ListItemText primary="Wake Up" />
+        </ListItemButton>
+      </Paper>
+    );
+  }
+
   return (
     <Paper 
       elevation={2} 
@@ -67,4 +86,4 @@ export function BeamSelector({ onSelect, selectedBeam }: BeamSelectorProps) {
       </List>
     </Paper>
   );
-} 
+}

@@ -1,10 +1,14 @@
 import { Box, IconButton, Tooltip, Paper } from '@mui/material';
 import GridOnIcon from '@mui/icons-material/GridOn';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 
 interface ToolPaletteProps {
   selectedTool: string;
   onSelectTool: (tool: string) => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
 }
 
 const tools = [
@@ -12,7 +16,7 @@ const tools = [
   { key: 'callout', label: 'Callout/Annotation', icon: <EditNoteIcon /> },
 ];
 
-export function ToolPalette({ selectedTool, onSelectTool }: ToolPaletteProps) {
+export function ToolPalette({ selectedTool, onSelectTool, onZoomIn, onZoomOut }: ToolPaletteProps) {
   return (
     <Paper elevation={3} sx={{
       width: 72,
@@ -45,6 +49,17 @@ export function ToolPalette({ selectedTool, onSelectTool }: ToolPaletteProps) {
           </IconButton>
         </Tooltip>
       ))}
+      {/* Zoom controls for elevation only */}
+      <Tooltip title="Zoom In Elevation" placement="right">
+        <IconButton onClick={onZoomIn} size="large">
+          <ZoomInIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Zoom Out Elevation" placement="right">
+        <IconButton onClick={onZoomOut} size="large">
+          <ZoomOutIcon />
+        </IconButton>
+      </Tooltip>
     </Paper>
   );
-} 
+}

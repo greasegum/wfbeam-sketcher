@@ -43,21 +43,45 @@ function App() {
   const [selectedTool, setSelectedTool] = useState<string>('grid')
   const [gridSize, setGridSize] = useState<number>(0.25)
   const [elevationZoom, setElevationZoom] = useState<number>(1.0)
-  const [profileZoom, setProfileZoom] = useState<number>(1.0)
-  const [buffer, setBuffer] = useState<number>(40) // px margin for annotation
+  const [buffer, setBuffer] = useState<number>(40)
   const [elevationHeight, setElevationHeight] = useState<number>(320)
   const [profileHeight, setProfileHeight] = useState<number>(320)
 
+  // Grid state for elevation overlay
+  const length = 60; // 5ft
+  const rows = selectedBeam ? Math.floor(selectedBeam.depth / gridSize) : 0;
+  const cols = Math.floor(length / gridSize);
+  const [grid, setGrid] = useState<string[][]>([]);
   useEffect(() => {
-    if (!selectedBeam && standardBeams.length > 0) {
-      setSelectedBeam(standardBeams[0])
+    if (rows > 0 && cols > 0) {
+      setGrid(Array(rows).fill(null).map(() => Array(cols).fill('rgba(0,191,255,0.15)')))
     }
-  }, [selectedBeam])
+  }, [rows, cols, selectedBeam, gridSize])
+
+  const handleGridCellClick = (row: number, col: number) => {
+    setGrid(prev => {
+      const next = prev.map(arr => arr.slice())
+      // Cycle through colors
+      const states = [
+        'rgba(0,191,255,0.15)', // intact
+        'rgba(255,193,7,0.25)', // corroded
+        'rgba(255,87,34,0.25)', // section loss
+        'rgba(244,67,54,0.35)'  // perforated
+      ]
+      const idx = states.indexOf(prev[row][col])
+      next[row][col] = states[(idx + 1) % states.length]
+      return next
+    })
+  }
 
   const handleBeamSelect = (beam: BeamProperties) => {
     logger.info('Beam selected', { beam: beam.designation })
     setSelectedBeam(beam)
   }
+
+  // Zoom controls for elevation only
+  const handleZoomIn = () => setElevationZoom(z => Math.min(z + 0.1, 5))
+  const handleZoomOut = () => setElevationZoom(z => Math.max(z - 0.1, 0.1))
 
   return (
     <ThemeProvider theme={theme}>
@@ -66,7 +90,7 @@ function App() {
         <Box sx={{ display: 'flex', height: '100vh', pb: 6 }}>
           {/* Left Panel: Tool Palette + Beam Selector */}
           <Box sx={{ width: 340, bgcolor: 'background.paper', borderRight: 1, borderColor: 'divider', p: 0, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-            <ToolPalette selectedTool={selectedTool} onSelectTool={setSelectedTool} />
+            <ToolPalette selectedTool={selectedTool} onSelectTool={setSelectedTool} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
             <BeamSelector onSelect={handleBeamSelect} selectedBeam={selectedBeam} />
           </Box>
           {/* Drawing Area */}
@@ -76,12 +100,15 @@ function App() {
               selectedTool={selectedTool}
               gridSize={gridSize}
               elevationZoom={elevationZoom}
-              profileZoom={profileZoom}
               buffer={buffer}
               elevationHeight={elevationHeight}
               profileHeight={profileHeight}
               setElevationHeight={setElevationHeight}
               setProfileHeight={setProfileHeight}
+              gridRows={rows}
+              gridCols={cols}
+              gridState={grid}
+              onGridCellClick={handleGridCellClick}
             />
           </Box>
         </Box>
@@ -90,8 +117,6 @@ function App() {
           onGridSizeChange={setGridSize}
           elevationZoom={elevationZoom}
           onElevationZoomChange={setElevationZoom}
-          profileZoom={profileZoom}
-          onProfileZoomChange={setProfileZoom}
           buffer={buffer}
           onBufferChange={setBuffer}
         />

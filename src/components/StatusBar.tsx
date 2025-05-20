@@ -5,8 +5,6 @@ interface StatusBarProps {
   onGridSizeChange: (size: number) => void;
   elevationZoom: number;
   onElevationZoomChange: (zoom: number) => void;
-  profileZoom: number;
-  onProfileZoomChange: (zoom: number) => void;
   buffer: number;
   onBufferChange: (buffer: number) => void;
 }
@@ -16,8 +14,6 @@ export function StatusBar({
   onGridSizeChange,
   elevationZoom,
   onElevationZoomChange,
-  profileZoom,
-  onProfileZoomChange,
   buffer,
   onBufferChange,
 }: StatusBarProps) {
@@ -72,20 +68,6 @@ export function StatusBar({
         sx={{ width: 80, mr: 2 }}
       />
       <Typography variant="body2" sx={{ mr: 2 }}>
-        Profile Zoom:
-      </Typography>
-      <TextField
-        size="small"
-        type="number"
-        value={profileZoom}
-        onChange={e => onProfileZoomChange(Number(e.target.value))}
-        inputProps={{ min: 0.1, step: 0.1 }}
-        InputProps={{
-          endAdornment: <InputAdornment position="end">x</InputAdornment>,
-        }}
-        sx={{ width: 80, mr: 2 }}
-      />
-      <Typography variant="body2" sx={{ mr: 2 }}>
         Buffer:
       </Typography>
       <TextField
@@ -101,4 +83,4 @@ export function StatusBar({
       />
     </Box>
   );
-} 
+}
