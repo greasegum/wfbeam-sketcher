@@ -130,95 +130,117 @@ export class SketchModel {
     outline.closed = true;
 
     // Start from top left, go clockwise
-    outline.add(new this.paperScope.Point(0, 0)); // Top left
-    outline.add(new this.paperScope.Point(w, 0)); // Top right
-    outline.add(new this.paperScope.Point(w, tf)); // Top flange bottom right
-    
-    // Add fillet at top right web intersection
-    const topRightCenter = new this.paperScope.Point(
-      (w + tw) / 2,
-      tf + r
-    );
-    outline.arcTo(
-      new this.paperScope.Point((w + tw) / 2, tf),
-      new this.paperScope.Point(tw + (w - tw) / 2, tf + r)
-    );
+    outline.moveTo(new this.paperScope.Point(0, 0)); // Top left
+    outline.lineTo(new this.paperScope.Point(w, 0)); // Top right
+    outline.lineTo(new this.paperScope.Point(w, tf)); // Top flange bottom right
 
-    outline.add(new this.paperScope.Point(tw + (w - tw) / 2, h - tf - r)); // Web right side
+    // Add fillet at top right web intersection
+    const topRightFillet = new this.paperScope.Path.Arc({
+      from: new this.paperScope.Point(w, tf),
+      through: new this.paperScope.Point((w + tw) / 2, tf + r),
+      to: new this.paperScope.Point((w + tw) / 2, tf + r)
+    });
+    outline.join(topRightFillet);
+
+    // Web right side
+    outline.lineTo(new this.paperScope.Point((w + tw) / 2, h - tf - r));
 
     // Add fillet at bottom right web intersection
-    const bottomRightCenter = new this.paperScope.Point(
-      (w + tw) / 2,
-      h - tf - r
-    );
-    outline.arcTo(
-      new this.paperScope.Point((w + tw) / 2, h - tf),
-      new this.paperScope.Point(w, h - tf)
-    );
+    const bottomRightFillet = new this.paperScope.Path.Arc({
+      from: new this.paperScope.Point((w + tw) / 2, h - tf - r),
+      through: new this.paperScope.Point((w + tw) / 2, h - tf),
+      to: new this.paperScope.Point(w, h - tf)
+    });
+    outline.join(bottomRightFillet);
 
-    outline.add(new this.paperScope.Point(w, h)); // Bottom right
-    outline.add(new this.paperScope.Point(0, h)); // Bottom left
-    outline.add(new this.paperScope.Point(0, h - tf)); // Bottom flange top left
+    outline.lineTo(new this.paperScope.Point(w, h)); // Bottom right
+    outline.lineTo(new this.paperScope.Point(0, h)); // Bottom left
+    outline.lineTo(new this.paperScope.Point(0, h - tf)); // Bottom flange top left
 
     // Add fillet at bottom left web intersection
-    const bottomLeftCenter = new this.paperScope.Point(
-      (w - tw) / 2,
-      h - tf - r
-    );
-    outline.arcTo(
-      new this.paperScope.Point((w - tw) / 2, h - tf),
-      new this.paperScope.Point((w - tw) / 2, h - tf - r)
-    );
+    const bottomLeftFillet = new this.paperScope.Path.Arc({
+      from: new this.paperScope.Point(0, h - tf),
+      through: new this.paperScope.Point((w - tw) / 2, h - tf),
+      to: new this.paperScope.Point((w - tw) / 2, h - tf - r)
+    });
+    outline.join(bottomLeftFillet);
 
-    outline.add(new this.paperScope.Point((w - tw) / 2, tf + r)); // Web left side
+    // Web left side
+    outline.lineTo(new this.paperScope.Point((w - tw) / 2, tf + r));
 
     // Add fillet at top left web intersection
-    const topLeftCenter = new this.paperScope.Point(
-      (w - tw) / 2,
-      tf + r
-    );
-    outline.arcTo(
-      new this.paperScope.Point((w - tw) / 2, tf),
-      new this.paperScope.Point(0, tf)
-    );
+    const topLeftFillet = new this.paperScope.Path.Arc({
+      from: new this.paperScope.Point((w - tw) / 2, tf + r),
+      through: new this.paperScope.Point((w - tw) / 2, tf),
+      to: new this.paperScope.Point(0, tf)
+    });
+    outline.join(topLeftFillet);
 
-    outline.add(new this.paperScope.Point(0, 0)); // Back to start
+    outline.lineTo(new this.paperScope.Point(0, 0)); // Back to start
+    outline.closePath();
 
-    // Create hatching
-    const hatchGroup = new this.paperScope.Group();
-    const hatchSpacing = colors.beam.hatching.spacing;
-    const hatchAngle = colors.beam.hatching.angle;
-    
-    // Calculate bounds for hatching
-    const bounds = outline.bounds;
-    const diagonal = Math.sqrt(bounds.width * bounds.width + bounds.height * bounds.height);
-    const numLines = Math.ceil(diagonal / hatchSpacing);
-    
-    // Create hatch lines
-    for (let i = -numLines; i < numLines; i++) {
-      const offset = i * hatchSpacing;
-      const hatchLine = new this.paperScope.Path.Line({
-        from: [bounds.left - diagonal, bounds.top + offset],
-        to: [bounds.left + diagonal, bounds.top + offset],
-        strokeColor: new this.paperScope.Color(colors.beam.hatching.stroke),
-        strokeWidth: colors.beam.hatching.strokeWidth
-      });
-      
-      // Rotate to 45 degrees
-      hatchLine.rotate(hatchAngle, bounds.center);
-      
-      // Clip to beam outline
-      const clipped = hatchLine.intersect(outline);
-      hatchGroup.addChild(clipped);
-      hatchLine.remove();
-    }
-
-    // Add outline and hatching to group
-    group.addChild(hatchGroup);
     group.addChild(outline);
 
-    // Position group in view
+    // Center the cross-section in the view
     group.position = viewRect.center;
+
+    // Add centerlines
+    const verticalCenterline = new this.paperScope.Path.Line({
+      from: new this.paperScope.Point(w/2, -h/4),
+      to: new this.paperScope.Point(w/2, h + h/4),
+      strokeColor: new this.paperScope.Color(colors.beam.stroke),
+      strokeWidth: colors.beam.strokeWidth * 0.5,
+      dashArray: [5, 5]
+    });
+
+    const horizontalCenterline = new this.paperScope.Path.Line({
+      from: new this.paperScope.Point(-w/4, h/2),
+      to: new this.paperScope.Point(w + w/4, h/2),
+      strokeColor: new this.paperScope.Color(colors.beam.stroke),
+      strokeWidth: colors.beam.strokeWidth * 0.5,
+      dashArray: [5, 5]
+    });
+
+    group.addChild(verticalCenterline);
+    group.addChild(horizontalCenterline);
+
+    // Add dimensions
+    const depthDimension = new this.paperScope.Group([
+      new this.paperScope.Path.Line({
+        from: new this.paperScope.Point(-w/4, 0),
+        to: new this.paperScope.Point(-w/4, h),
+        strokeColor: new this.paperScope.Color(colors.dimensions.lines.stroke),
+        strokeWidth: colors.dimensions.lines.strokeWidth
+      }),
+      new this.paperScope.PointText({
+        point: new this.paperScope.Point(-w/3, h/2),
+        content: `${depth}"`,
+        justification: 'right',
+        fontSize: 10,
+        fillColor: new this.paperScope.Color(colors.dimensions.text.fill)
+      })
+    ]);
+
+    const widthDimension = new this.paperScope.Group([
+      new this.paperScope.Path.Line({
+        from: new this.paperScope.Point(0, h + h/4),
+        to: new this.paperScope.Point(w, h + h/4),
+        strokeColor: new this.paperScope.Color(colors.dimensions.lines.stroke),
+        strokeWidth: colors.dimensions.lines.strokeWidth
+      }),
+      new this.paperScope.PointText({
+        point: new this.paperScope.Point(w/2, h + h/3),
+        content: `${flangeWidth}"`,
+        justification: 'center',
+        fontSize: 10,
+        fillColor: new this.paperScope.Color(colors.dimensions.text.fill)
+      })
+    ]);
+
+    group.addChild(depthDimension);
+    group.addChild(widthDimension);
+
+    this.beamGroup = group;
     return group;
   }
 

@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "vite"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -33,5 +33,21 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",
     "vite": "^6.3.5"
-  }
+  },
+  "description": "WFBeam Sketcher is an interactive, inspector-friendly web tool for annotating and reporting on W-beam cross-sections and elevations. It is designed for structural inspection workflows, enabling users to sketch, mark up, and export detailed beam diagrams with ease.",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/greasegum/wfbeam-sketcher.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/greasegum/wfbeam-sketcher/issues"
+  },
+  "homepage": "https://github.com/greasegum/wfbeam-sketcher#readme"
 }

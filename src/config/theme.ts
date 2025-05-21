@@ -31,6 +31,15 @@ export const colors = {
       angle: 45            // Degrees for hatching
     }
   },
+  dimensions: {
+    lines: {
+      stroke: 'rgba(255,255,255,0.7)',  // Semi-opaque white for dimension lines
+      strokeWidth: 1,
+    },
+    text: {
+      fill: 'rgba(255,255,255,0.9)',    // Nearly opaque white for dimension text
+    }
+  },
   grid: {
     lines: {
       stroke: 'rgba(255,255,255,0.15)',  // Subtle grid lines

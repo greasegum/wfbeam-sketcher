@@ -2,7 +2,6 @@ import { Box, Paper, Typography } from '@mui/material';
 import * as makerjs from 'makerjs';
 import type { BeamProperties } from '../data/beamProperties';
 import { colors } from '../config/theme';
-import { DimensionOverlay } from './DimensionOverlay';
 
 interface BeamRendererProps {
   beam: BeamProperties;
@@ -93,11 +92,11 @@ export function BeamCrossSection({ beam, scale }: BeamRendererProps) {
     <Box sx={{ 
       width: '100%',
       height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
       justifyContent: 'center',
-      bgcolor: 'background.paper',
+        bgcolor: 'background.paper',
       p: 1
     }}>
       <Box
@@ -183,21 +182,21 @@ export function BeamElevation({
       for (let c = 0; c < gridCols; c++) {
         if (gridState[r][c] !== colors.grid.web.intact) { // Only show non-intact cells
           conditionCells.push(
-            <rect
+          <rect
               key={`web-cell-${r}-${c}`}
               x={c * cellW}
               y={tf + r * cellH}
-              width={cellW}
-              height={cellH}
-              fill={gridState[r][c]}
+            width={cellW}
+            height={cellH}
+            fill={gridState[r][c]}
               stroke="none"
               onClick={onGridCellClick ? () => onGridCellClick(r, c, false) : undefined}
-              style={{ cursor: onGridCellClick ? 'pointer' : 'default' }}
-            />
-          );
-        }
+            style={{ cursor: onGridCellClick ? 'pointer' : 'default' }}
+          />
+        );
       }
     }
+  }
 
     webGridOverlay = [...gridLines, ...conditionCells];
   }
@@ -316,17 +315,7 @@ export function BeamElevation({
             {webGridOverlay}
             {flangeElements}
             {/* Beam outline with high contrast */}
-            <g dangerouslySetInnerHTML={{ __html: svg.replace('<svg xmlns="http://www.w3.org/2000/svg"', '<g').replace('</svg>', '</g>') }} />
-            {/* Dimension overlay */}
-            <DimensionOverlay
-              width={width}
-              height={height}
-              scale={scale}
-              beam={beam}
-              showOrdinate={true}
-              showDepth={true}
-              showFlangeWidth={true}
-            />
+          <g dangerouslySetInnerHTML={{ __html: svg.replace('<svg xmlns="http://www.w3.org/2000/svg"', '<g').replace('</svg>', '</g>') }} />
           </g>
         </svg>
       </Box>

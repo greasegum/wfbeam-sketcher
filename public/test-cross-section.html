@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beam Cross-Section Test</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
+    <style>
+        body { margin: 0; padding: 20px; background: #f0f0f0; }
+        #canvas-container {
+            width: 800px;
+            height: 600px;
+            margin: auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        canvas { 
+            width: 100%; 
+            height: 100%; 
+            background: white;
+        }
+        .controls {
+            margin: 20px auto;
+            width: 800px;
+            padding: 10px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .layer-toggle {
+            margin: 10px;
+            display: inline-block;
+        }
+        .style-selector {
+            margin: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div class="layer-toggle">
+            <input type="checkbox" id="baseGeometry" checked>
+            <label for="baseGeometry">Base Geometry</label>
+        </div>
+        <div class="layer-toggle">
+            <input type="checkbox" id="hatching" checked>
+            <label for="hatching">Hatching</label>
+        </div>
+        <div class="layer-toggle">
+            <input type="checkbox" id="dimensions" checked>
+            <label for="dimensions">Dimensions</label>
+        </div>
+        <div class="style-selector">
+            <select id="dimensionStyle">
+                <option value="base">Base Style</option>
+                <option value="ansi">ANSI Standard</option>
+                <option value="iso">ISO Standard</option>
+                <option value="architectural">Architectural</option>
+            </select>
+        </div>
+        <select id="beamSelect">
+            <option value="W12x26">W12x26</option>
+            <option value="W14x30">W14x30</option>
+            <option value="W16x40">W16x40</option>
+            <option value="W18x50">W18x50</option>
+        </select>
+    </div>
+    <div id="canvas-container">
+        <canvas id="myCanvas" resize></canvas>
+    </div>
+
+    <script type="module">
+        // Import our dimension system
+        import { DimensionManager } from '/src/managers/DimensionManager.ts';
+        import { baseStyle, ansiStyle, isoStyle, architecturalStyle } from '/src/config/dimensionStyles.ts';
+        
+        window.onload = function() {
+            paper.setup('myCanvas');
+            
+            // Layer setup
+            var baseLayer = new paper.Layer();
+            var hatchingLayer = new paper.Layer();
+            var dimensionLayer = new paper.Layer();
+            var axisLayer = new paper.Layer();
+
+            // Technical drawing colors and styles
+            var colors = {
+                baseGeometry: {
+                    stroke: '#000000',
+                    strokeWidth: 1.5
+                },
+                hatching: {
+                    stroke: '#000000',
+                    strokeWidth: 0.5,
+                    spacing: 15,
+                    angle: 45
+                },
+                dimensions: {
+                    stroke: '#000000',
+                    text: '#000000',
+                    strokeWidth: 0.75
+                },
+                axis: {
+                    stroke: '#000000',
+                    strokeWidth: 0.5,
+                    dashArray: [4, 4]
+                }
+            };
+
+            // Beam properties
+            var beamProps = {
+                'W12x26': {
+                    depth: 12.23,
+                    flangeWidth: 6.49,
+                    flangeThickness: 0.38,
+                    webThickness: 0.23
+                },
+                'W14x30': {
+                    depth: 13.84,
+                    flangeWidth: 6.73,
+                    flangeThickness: 0.385,
+                    webThickness: 0.27
+                },
+                'W16x40': {
+                    depth: 16.0,
+                    flangeWidth: 7.0,
+                    flangeThickness: 0.43,
+                    webThickness: 0.305
+                },
+                'W18x50': {
+                    depth: 18.0,
+                    flangeWidth: 7.5,
+                    flangeThickness: 0.57,
+                    webThickness: 0.355
+                }
+            };
+
+            var currentBeam = beamProps['W12x26'];
+            var currentStyle = baseStyle;
+            var dimensionManager = new DimensionManager(paper, currentStyle);
+
+            function drawBeamCrossSection(beam) {
+                // Calculate scale to fit canvas
+                const margin = 80;
+                const maxWidth = paper.view.size.width - 2 * margin;
+                const maxHeight = paper.view.size.height - 2 * margin;
+                const scaleX = maxWidth / (beam.flangeWidth * 1.5);
+                const scaleY = maxHeight / (beam.depth * 1.5);
+                const scale = Math.min(scaleX, scaleY);
+
+                // Clear all layers
+                paper.project.activeLayer.removeChildren();
+                baseLayer.removeChildren();
+                hatchingLayer.removeChildren();
+                dimensionLayer.removeChildren();
+                axisLayer.removeChildren();
+                dimensionManager.clear();
+
+                // Calculate dimensions
+                var w = beam.flangeWidth * scale;
+                var h = beam.depth * scale;
+                var tf = beam.flangeThickness * scale;
+                var tw = beam.webThickness * scale;
+                var r = 0.25 * scale;
+
+                // Center point for the beam
+                var center = paper.view.center;
+                var topLeft = new paper.Point(center.x - w/2, center.y - h/2);
+
+                // Draw base geometry
+                baseLayer.activate();
+                var outline = new paper.Path();
+                outline.strokeColor = colors.baseGeometry.stroke;
+                outline.strokeWidth = colors.baseGeometry.strokeWidth;
+                outline.fillColor = 'white';
+
+                // Draw outline clockwise from top left
+                outline.add(topLeft);
+                outline.add(topLeft.add([w, 0]));
+                outline.add(topLeft.add([w, tf]));
+                outline.add(topLeft.add([(w + tw)/2, tf + r]));
+                outline.add(topLeft.add([(w + tw)/2, h - tf - r]));
+                outline.add(topLeft.add([w, h - tf]));
+                outline.add(topLeft.add([w, h]));
+                outline.add(topLeft.add([0, h]));
+                outline.add(topLeft.add([0, h - tf]));
+                outline.add(topLeft.add([(w - tw)/2, h - tf - r]));
+                outline.add(topLeft.add([(w - tw)/2, tf + r]));
+                outline.add(topLeft.add([0, tf]));
+                outline.closed = true;
+
+                // Draw hatching
+                if (document.getElementById('hatching').checked) {
+                    hatchingLayer.activate();
+                    var bounds = outline.bounds;
+                    var spacing = 12;
+                    var width = bounds.width + spacing * 4;
+                    var height = bounds.height + spacing * 4;
+                    var startX = bounds.left - spacing * 2;
+                    var startY = bounds.top - spacing * 2;
+
+                    for (var x = startX; x < startX + width + height; x += spacing) {
+                        var topPoint = new paper.Point(x, startY);
+                        var bottomPoint = new paper.Point(x - height, startY + height);
+                        
+                        var hatchLine = new paper.Path.Line({
+                            from: topPoint,
+                            to: bottomPoint,
+                            strokeColor: '#000000',
+                            strokeWidth: 0.3
+                        });
+
+                        var intersections = outline.getIntersections(hatchLine);
+                        intersections.sort((a, b) => a.point.y - b.point.y);
+                        
+                        for (var i = 0; i < intersections.length - 1; i += 2) {
+                            var finalLine = new paper.Path.Line({
+                                from: intersections[i].point,
+                                to: intersections[i + 1].point,
+                                strokeColor: '#000000',
+                                strokeWidth: 0.3
+                            });
+                            hatchingLayer.addChild(finalLine);
+                        }
+                        
+                        hatchLine.remove();
+                    }
+                }
+
+                // Redraw the outline over the hatching
+                var outlineOverlay = outline.clone();
+                outlineOverlay.strokeColor = colors.baseGeometry.stroke;
+                outlineOverlay.strokeWidth = colors.baseGeometry.strokeWidth;
+                outlineOverlay.fillColor = null;
+                baseLayer.addChild(outlineOverlay);
+
+                // Draw dimensions
+                if (document.getElementById('dimensions').checked) {
+                    dimensionLayer.activate();
+
+                    // Overall depth (d)
+                    dimensionManager.addDimension(
+                        { x: topLeft.x, y: topLeft.y },
+                        { x: topLeft.x, y: topLeft.y + h },
+                        'd = ' + beam.depth + '"',
+                        {
+                            isChained: false,
+                            tolerance: { upper: 0.06, lower: 0.06 }
+                        }
+                    );
+
+                    // Flange width (bf)
+                    dimensionManager.addDimension(
+                        { x: topLeft.x, y: topLeft.y },
+                        { x: topLeft.x + w, y: topLeft.y },
+                        'bf = ' + beam.flangeWidth + '"',
+                        {
+                            isChained: false,
+                            tolerance: { upper: 0.125, lower: 0.125 }
+                        }
+                    );
+
+                    // Web thickness (tw)
+                    dimensionManager.addDimension(
+                        { x: center.x - tw/2, y: center.y },
+                        { x: center.x + tw/2, y: center.y },
+                        'tw = ' + beam.webThickness + '"',
+                        {
+                            isChained: false,
+                            tolerance: { upper: 0.02, lower: 0.02 }
+                        }
+                    );
+
+                    // Flange thickness (tf)
+                    dimensionManager.addDimension(
+                        { x: topLeft.x + w/4, y: topLeft.y },
+                        { x: topLeft.x + w/4, y: topLeft.y + tf },
+                        'tf = ' + beam.flangeThickness + '"',
+                        {
+                            isChained: false,
+                            tolerance: { upper: 0.015, lower: 0.015 }
+                        }
+                    );
+                }
+
+                // Update dimension scale
+                dimensionManager.updateViewportScale(scale);
+            }
+
+            // Initial draw
+            drawBeamCrossSection(currentBeam);
+
+            // Handle layer visibility toggles
+            paper.view.onFrame = function(event) {
+                baseLayer.visible = document.getElementById('baseGeometry').checked;
+                hatchingLayer.visible = document.getElementById('hatching').checked;
+                dimensionLayer.visible = document.getElementById('dimensions').checked;
+            }
+
+            // Handle beam selection
+            document.getElementById('beamSelect').onchange = function(event) {
+                currentBeam = beamProps[event.target.value];
+                drawBeamCrossSection(currentBeam);
+            }
+
+            // Handle dimension style selection
+            document.getElementById('dimensionStyle').onchange = function(event) {
+                switch(event.target.value) {
+                    case 'ansi':
+                        currentStyle = ansiStyle;
+                        break;
+                    case 'iso':
+                        currentStyle = isoStyle;
+                        break;
+                    case 'architectural':
+                        currentStyle = architecturalStyle;
+                        break;
+                    default:
+                        currentStyle = baseStyle;
+                }
+                dimensionManager = new DimensionManager(paper, currentStyle);
+                drawBeamCrossSection(currentBeam);
+            }
+
+            // Keep paper view updated
+            paper.view.draw();
+        }
+    </script>
+</body>
+</html> 
