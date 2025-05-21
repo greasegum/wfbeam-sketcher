@@ -3,6 +3,7 @@ import GridOnIcon from '@mui/icons-material/GridOn';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import { commonStyles } from '../config/theme';
 
 interface ToolPaletteProps {
   selectedTool: string;
@@ -19,7 +20,7 @@ const tools = [
 export function ToolPalette({ selectedTool, onSelectTool, onZoomIn, onZoomOut }: ToolPaletteProps) {
   return (
     <Paper elevation={3} sx={{
-      width: 72,
+      width: commonStyles.toolPalette.width,
       bgcolor: 'background.paper',
       display: 'flex',
       flexDirection: 'column',

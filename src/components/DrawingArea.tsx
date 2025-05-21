@@ -49,12 +49,43 @@ export function DrawingArea({
   const beamHeight = selectedBeam ? selectedBeam.depth * elevationScale : 0;
   const beamWidth = length * elevationScale;
 
+  // Calculate profile view dimensions
+  const profileScale = baseScale;
+  const calculatedProfileWidth = selectedBeam ? selectedBeam.flangeWidth * profileScale + buffer * 2 : 0;
+  const calculatedProfileHeight = selectedBeam ? selectedBeam.depth * profileScale + buffer * 2 : 0;
+
   return (
-    <Paper elevation={2} sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', color: 'text.primary', fontFamily: 'Inter, Roboto, Fira Sans, Arial, sans-serif', boxShadow: 'none', overflow: 'auto' }}>
+    <Box sx={{ 
+      width: '100%', 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      bgcolor: 'background.default',
+      overflow: 'hidden'
+    }}>
       {selectedBeam ? (
-        <Box sx={{ width: '100%', maxWidth: 1600, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, py: 2 }}>
-          {/* Elevation view */}
-          <Box sx={{ position: 'relative', width: beamWidth + buffer * 2, height: elevationHeight, minHeight: 200, maxHeight: 800, minWidth: 400, maxWidth: 2000, bgcolor: '#232526', border: '2px solid #444', borderRadius: 2, boxShadow: 3, mb: 2, resize: 'vertical', overflow: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Box sx={{ 
+          width: '100%', 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          p: 2
+        }}>
+          {/* Main elevation view */}
+          <Box sx={{ 
+            flex: 1,
+            minHeight: 0,
+            position: 'relative',
+            bgcolor: '#232526',
+            border: '2px solid #444',
+            borderRadius: 2,
+            boxShadow: 3,
+            overflow: 'auto',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
             <BeamElevation
               beam={selectedBeam}
               scale={elevationScale}
@@ -63,16 +94,38 @@ export function DrawingArea({
               gridState={gridState}
               onGridCellClick={onGridCellClick}
             />
-            {/* Resizer handle (stub) */}
-            <Box sx={{ position: 'absolute', right: 0, bottom: 0, width: 16, height: 16, cursor: 'ns-resize', bgcolor: 'transparent' }} />
           </Box>
-          {/* Cross section (profile) in a fixed-size, resizable window */}
-          <Box sx={{ width: beamWidth / 2 + buffer * 2, height: profileHeight, minHeight: 200, maxHeight: 800, minWidth: 200, maxWidth: 1000, bgcolor: '#232526', border: '2px solid #444', borderRadius: 2, boxShadow: 3, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <BeamCrossSection beam={selectedBeam} scale={baseScale} />
+
+          {/* Cross section view */}
+          <Box sx={{ 
+            position: 'absolute',
+            bottom: 16,
+            left: 16,
+            width: calculatedProfileWidth,
+            height: calculatedProfileHeight,
+            bgcolor: '#232526',
+            border: '2px solid #444',
+            borderRadius: 2,
+            boxShadow: 3,
+            overflow: 'hidden',
+            zIndex: 1
+          }}>
+            <BeamCrossSection 
+              beam={selectedBeam} 
+              scale={profileScale}
+            />
           </Box>
         </Box>
       ) : (
-        <Box textAlign="center">
+        <Box sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2
+        }}>
           <Typography variant="h5" gutterBottom>
             Drawing Area
           </Typography>
@@ -87,6 +140,6 @@ export function DrawingArea({
           </Typography>
         </Box>
       )}
-    </Paper>
+    </Box>
   );
 }

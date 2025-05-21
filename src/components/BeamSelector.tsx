@@ -1,7 +1,6 @@
-import { List, ListItemButton, ListItemText, Typography, Paper } from '@mui/material';
+import { Paper, Typography, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import type { BeamProperties } from '../data/beamProperties';
 import { standardBeams } from '../data/beamProperties';
-import { useState } from 'react';
 
 interface BeamSelectorProps {
   onSelect: (beam: BeamProperties) => void;
@@ -9,81 +8,35 @@ interface BeamSelectorProps {
 }
 
 export function BeamSelector({ onSelect, selectedBeam }: BeamSelectorProps) {
-  const [isAwake, setIsAwake] = useState(false);
-
-  if (!isAwake) {
-    return (
-      <Paper elevation={2} sx={{ width: '100%', p: 2, textAlign: 'center', borderRadius: 0, bgcolor: 'background.paper' }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: 14, letterSpacing: 1, mb: 2 }}>
-          Standard W-Beams (Sleeping)
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Click to wake the beam selector.
-        </Typography>
-        <ListItemButton onClick={() => setIsAwake(true)} sx={{ mx: 'auto', width: 'fit-content', bgcolor: 'primary.light', color: 'primary.contrastText', borderRadius: 1 }}>
-          <ListItemText primary="Wake Up" />
-        </ListItemButton>
-      </Paper>
-    );
-  }
-
   return (
-    <Paper 
-      elevation={2} 
-      sx={{ 
-        maxHeight: 'calc(100vh - 120px)',
-        overflow: 'auto',
-        width: '100%',
-        borderRadius: 0,
-        mb: 0,
-        bgcolor: 'background.paper',
-      }}
-    >
-      <Typography variant="subtitle2" sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider', fontWeight: 700, fontSize: 14, letterSpacing: 1 }}>
-        Standard W-Beams
+    <Paper elevation={2} sx={{ width: '100%', p: 2, borderRadius: 0, bgcolor: 'background.paper' }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: 14, letterSpacing: 1, mb: 2 }}>
+        Beam Profile
       </Typography>
-      <List dense disablePadding>
-        {standardBeams.map((beam) => (
-          <ListItemButton
-            key={beam.designation}
-            onClick={() => onSelect(beam)}
-            selected={selectedBeam?.designation === beam.designation}
-            sx={{
-              minHeight: 36,
-              maxHeight: 36,
-              px: 2,
-              py: 0,
-              fontSize: 13,
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              '&.Mui-selected': {
-                backgroundColor: 'primary.light',
-                color: 'primary.contrastText',
-                '&:hover': {
-                  backgroundColor: 'primary.light',
-                },
-              },
-            }}
-          >
-            <ListItemText
-              primary={
-                <span style={{ fontWeight: 500, fontSize: 13, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', display: 'block' }}>
-                  {beam.designation} — Depth: {beam.depth}" | Flange: {beam.flangeWidth}" | {beam.weight} lb/ft
-                </span>
-              }
-              primaryTypographyProps={{
-                style: {
-                  fontSize: 13,
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                },
-              }}
-            />
-          </ListItemButton>
-        ))}
-      </List>
+      <FormControl fullWidth size="small">
+        <InputLabel id="beam-select-label">Select W-Beam</InputLabel>
+        <Select
+          labelId="beam-select-label"
+          value={selectedBeam?.designation || ''}
+          label="Select W-Beam"
+          onChange={(e) => {
+            const beam = standardBeams.find(b => b.designation === e.target.value);
+            if (beam) onSelect(beam);
+          }}
+          sx={{ 
+            bgcolor: 'background.paper',
+            '& .MuiSelect-select': {
+              py: 1
+            }
+          }}
+        >
+          {standardBeams.map((beam) => (
+            <MenuItem key={beam.designation} value={beam.designation}>
+              {beam.designation} — {beam.depth}" × {beam.flangeWidth}" ({beam.weight} lb/ft)
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     </Paper>
   );
 }
