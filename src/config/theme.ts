@@ -24,6 +24,12 @@ export const colors = {
   beam: {
     stroke: '#ffffff',      // High contrast white for beam outlines
     strokeWidth: 1.5,       // Thicker lines for better visibility
+    hatching: {
+      stroke: 'rgba(255,255,255,0.3)', // Semi-transparent white for hatching
+      strokeWidth: 0.5,
+      spacing: 3,           // Pixels between hatch lines
+      angle: 45            // Degrees for hatching
+    }
   },
   grid: {
     lines: {
@@ -32,15 +38,15 @@ export const colors = {
     },
     web: {
       intact: 'rgba(0,191,255,0.05)',    // Almost invisible when intact
-      corroded: 'rgba(255,193,7,0.6)',   // Amber, more visible
-      section_loss: 'rgba(255,87,34,0.7)', // Deep orange, very visible
-      perforated: 'rgba(244,67,54,0.8)',  // Red, most visible
+      corroded: 'rgba(255,180,0,0.8)',   // Bright amber/gold
+      section_loss: 'rgba(255,60,0,0.8)', // Bright orange-red
+      perforated: 'rgba(220,20,60,0.8)',  // Crimson red
     },
     flange: {
       intact: 'rgba(0,191,255,0.05)',    // Almost invisible when intact
-      corroded: 'rgba(255,193,7,0.6)',   // Amber, more visible
-      section_loss: 'rgba(255,87,34,0.7)', // Deep orange, very visible
-      perforated: 'rgba(244,67,54,0.8)',  // Red, most visible
+      corroded: 'rgba(255,180,0,0.8)',   // Bright amber/gold
+      section_loss: 'rgba(255,60,0,0.8)', // Bright orange-red
+      perforated: 'rgba(220,20,60,0.8)',  // Crimson red
     }
   },
 };
@@ -81,28 +87,42 @@ export const commonStyles = {
     height: 48,
   },
   toolPalette: {
-    width: 72,
+    width: 56,
+  },
+  layerControl: {
+    width: 280,
   },
   buffer: {
     min: 20,
     max: 100,
-    step: 5,
+    step: 10,
   },
   grid: {
     web: {
       minSize: 0.5,    // Web grid 0.5" to 3"
-      maxSize: 3.0,
+      maxSize: 2.0,
       step: 0.5,
     },
     flange: {
       minSize: 1.0,    // Flange marks 1" to 6"
-      maxSize: 6.0,
+      maxSize: 4.0,
       step: 1.0,
     }
   },
   zoom: {
-    min: 0.1,
-    max: 5,
-    step: 0.1,
+    min: 0.25,  // 1:4 scale
+    max: 4,      // 4:1 scale
+    step: 0.25, // Step by standard scale factors
+    baseScale: 20, // 20px per inch base scale
   },
+};
+
+// Add scale ratios for display
+export const scaleRatios = {
+  0.125: '1:8',
+  0.25: '1:4',
+  0.5: '1:2',
+  1: '1:1',
+  2: '2:1',
+  4: '4:1'
 }; 

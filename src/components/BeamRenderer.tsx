@@ -2,6 +2,7 @@ import { Box, Paper, Typography } from '@mui/material';
 import * as makerjs from 'makerjs';
 import type { BeamProperties } from '../data/beamProperties';
 import { colors } from '../config/theme';
+import { DimensionOverlay } from './DimensionOverlay';
 
 interface BeamRendererProps {
   beam: BeamProperties;
@@ -9,7 +10,8 @@ interface BeamRendererProps {
   gridRows?: number;
   gridCols?: number;
   gridState?: string[][];
-  flangeGridState?: string[][];
+  topFlangeGrid?: string[];
+  bottomFlangeGrid?: string[];
   webGridSize?: number;
   flangeGridSize?: number;
   onGridCellClick?: (row: number, col: number, isFlange: boolean) => void;
@@ -47,24 +49,35 @@ function getBeamElevationMakerModel(beam: BeamProperties, length: number, scale:
   const w = length * scale;
   const h = beam.depth * scale;
   const tf = beam.flangeThickness * scale;
-  const tw = beam.webThickness * scale;
 
-  // Outline, top flange, bottom flange, web
+  // Create paths for the beam outline and flanges only
   const model: makerjs.IModel = {
-    models: {
-      outline: new makerjs.models.Rectangle(w, h),
-      topFlange: new makerjs.models.Rectangle(w, tf),
-      botFlange: new makerjs.models.Rectangle(w, tf),
-      web: new makerjs.models.Rectangle(tw, h - 2 * tf)
+    paths: {
+      // Outer rectangle using lines
+      outlineTop: new makerjs.paths.Line([0, 0], [w, 0]),
+      outlineRight: new makerjs.paths.Line([w, 0], [w, h]),
+      outlineBottom: new makerjs.paths.Line([w, h], [0, h]),
+      outlineLeft: new makerjs.paths.Line([0, h], [0, 0]),
+      // Top flange line
+      topFlangeLine: new makerjs.paths.Line([0, tf], [w, tf]),
+      // Bottom flange line
+      bottomFlangeLine: new makerjs.paths.Line([0, h - tf], [w, h - tf])
     },
     origin: [20, 20]
   };
 
-  // Position elements
-  makerjs.model.moveRelative(model.models!.botFlange, [0, h - tf]);
-  makerjs.model.moveRelative(model.models!.web, [(w - tw) / 2, tf]);
-
   return model;
+}
+
+// Utility to create dimension text and lines
+function createOrdinateDimension(x: number, scale: number) {
+  const inches = x / scale;
+  const feet = Math.floor(inches / 12);
+  const remainingInches = inches % 12;
+  
+  return feet > 0 ? 
+    `${feet}'-${remainingInches > 0 ? remainingInches + '"' : '0"'}` : 
+    `${remainingInches}"`;
 }
 
 export function BeamCrossSection({ beam, scale }: BeamRendererProps) {
@@ -112,7 +125,8 @@ export function BeamElevation({
   gridRows, 
   gridCols, 
   gridState, 
-  flangeGridState,
+  topFlangeGrid,
+  bottomFlangeGrid,
   webGridSize = 1.0,
   flangeGridSize = 2.0,
   onGridCellClick 
@@ -130,11 +144,12 @@ export function BeamElevation({
     const webHeight = height - 2 * tf; // Web height excludes flanges
     const cellH = webHeight / gridRows;
     const cellW = width / gridCols;
-    webGridOverlay = [];
 
     // First add the grid lines
+    const gridLines = [];
+    // Horizontal grid lines
     for (let r = 0; r <= gridRows; r++) {
-      webGridOverlay.push(
+      gridLines.push(
         <line
           key={`web-grid-h-${r}`}
           x1={0}
@@ -146,8 +161,9 @@ export function BeamElevation({
         />
       );
     }
+    // Vertical grid lines
     for (let c = 0; c <= gridCols; c++) {
-      webGridOverlay.push(
+      gridLines.push(
         <line
           key={`web-grid-v-${c}`}
           x1={c * cellW}
@@ -161,11 +177,12 @@ export function BeamElevation({
     }
 
     // Then add the condition state cells
+    const conditionCells = [];
     for (let r = 0; r < gridRows; r++) {
       if (!Array.isArray(gridState[r])) continue;
       for (let c = 0; c < gridCols; c++) {
         if (gridState[r][c] !== colors.grid.web.intact) { // Only show non-intact cells
-          webGridOverlay.push(
+          conditionCells.push(
             <rect
               key={`web-cell-${r}-${c}`}
               x={c * cellW}
@@ -181,39 +198,84 @@ export function BeamElevation({
         }
       }
     }
+
+    webGridOverlay = [...gridLines, ...conditionCells];
   }
 
-  // Flange grid marks
-  const flangeMarks = [];
-  const flangeSpacing = flangeGridSize * scale;
-  for (let x = 0; x <= width; x += flangeSpacing) {
-    // Top flange marks
-    flangeMarks.push(
-      <line
-        key={`top-mark-${x}`}
-        x1={x}
-        y1={0}
-        x2={x}
-        y2={tf}
-        stroke={colors.grid.lines.stroke}
-        strokeWidth={colors.grid.lines.strokeWidth}
-      />
-    );
-    // Bottom flange marks
-    flangeMarks.push(
-      <line
-        key={`bottom-mark-${x}`}
-        x1={x}
-        y1={height - tf}
-        x2={x}
-        y2={height}
-        stroke={colors.grid.lines.stroke}
-        strokeWidth={colors.grid.lines.strokeWidth}
-      />
-    );
+  // Flange grid marks and condition states
+  const flangeElements = [];
+  if (topFlangeGrid && bottomFlangeGrid) {
+    const flangeSpacing = flangeGridSize * scale;
+    
+    // Add flange grid lines
+    for (let x = 0; x <= width; x += flangeSpacing) {
+      // Top flange marks
+      flangeElements.push(
+        <line
+          key={`top-mark-${x}`}
+          x1={x}
+          y1={0}
+          x2={x}
+          y2={tf}
+          stroke={colors.grid.lines.stroke}
+          strokeWidth={colors.grid.lines.strokeWidth}
+        />
+      );
+      // Bottom flange marks
+      flangeElements.push(
+        <line
+          key={`bottom-mark-${x}`}
+          x1={x}
+          y1={height - tf}
+          x2={x}
+          y2={height}
+          stroke={colors.grid.lines.stroke}
+          strokeWidth={colors.grid.lines.strokeWidth}
+        />
+      );
+    }
+
+    // Add flange condition states
+    const flangeWidth = flangeSpacing;
+    // Top flange conditions
+    topFlangeGrid.forEach((state, index) => {
+      if (state !== colors.grid.flange.intact) {
+        flangeElements.push(
+          <rect
+            key={`top-flange-${index}`}
+            x={index * flangeWidth}
+            y={0}
+            width={flangeWidth}
+            height={tf}
+            fill={state}
+            stroke="none"
+            onClick={onGridCellClick ? () => onGridCellClick(0, index, true) : undefined}
+            style={{ cursor: onGridCellClick ? 'pointer' : 'default' }}
+          />
+        );
+      }
+    });
+    // Bottom flange conditions
+    bottomFlangeGrid.forEach((state, index) => {
+      if (state !== colors.grid.flange.intact) {
+        flangeElements.push(
+          <rect
+            key={`bottom-flange-${index}`}
+            x={index * flangeWidth}
+            y={height - tf}
+            width={flangeWidth}
+            height={tf}
+            fill={state}
+            stroke="none"
+            onClick={onGridCellClick ? () => onGridCellClick(1, index, true) : undefined}
+            style={{ cursor: onGridCellClick ? 'pointer' : 'default' }}
+          />
+        );
+      }
+    });
   }
 
-  // Maker.js for outline/flanges with high contrast
+  // Maker.js for beam outline with high contrast
   const model = getBeamElevationMakerModel(beam, length, scale);
   const svg = makerjs.exporter.toSVG(model, {
     stroke: colors.beam.stroke,
@@ -233,8 +295,8 @@ export function BeamElevation({
     }}>
       <Box sx={{ 
         position: 'relative', 
-        width: width + 40, 
-        height: height + 40, 
+        width: width + 120, // Increased width for vertical dimensions
+        height: height + 120, // Increased height for horizontal dimensions
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
@@ -242,13 +304,29 @@ export function BeamElevation({
         border: '1px solid', 
         borderColor: 'divider' 
       }}>
-        <svg width={width + 40} height={height + 40} viewBox={`0 0 ${width + 40} ${height + 40}`} style={{ position: 'absolute' }}>
-          <g transform={`translate(20, 20)`}>
+        <svg 
+          width={width + 120} 
+          height={height + 120} 
+          viewBox={`-30 -30 ${width + 120} ${height + 120}`} 
+          style={{ position: 'absolute' }}
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <g>
             {/* Grid overlays */}
             {webGridOverlay}
-            {flangeMarks}
+            {flangeElements}
             {/* Beam outline with high contrast */}
             <g dangerouslySetInnerHTML={{ __html: svg.replace('<svg xmlns="http://www.w3.org/2000/svg"', '<g').replace('</svg>', '</g>') }} />
+            {/* Dimension overlay */}
+            <DimensionOverlay
+              width={width}
+              height={height}
+              scale={scale}
+              beam={beam}
+              showOrdinate={true}
+              showDepth={true}
+              showFlangeWidth={true}
+            />
           </g>
         </svg>
       </Box>

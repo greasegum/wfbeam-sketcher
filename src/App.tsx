@@ -4,6 +4,7 @@ import { BeamSelector } from './components/BeamSelector'
 import { ToolPalette } from './components/ToolPalette'
 import { DrawingArea } from './components/DrawingArea'
 import { StatusBar } from './components/StatusBar'
+import { LayerControl, type LayerState } from './components/LayerControl'
 import type { BeamProperties } from './data/beamProperties'
 import { standardBeams } from './data/beamProperties'
 import { logger } from './utils/logger'
@@ -19,6 +20,7 @@ function App() {
   const [elevationHeight, setElevationHeight] = useState<number>(320)
   const [profileHeight, setProfileHeight] = useState<number>(320)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [showGrid, setShowGrid] = useState(false)
 
   // Responsive breakpoints
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -34,6 +36,16 @@ function App() {
   const flangeCols = Math.floor(length / flangeGridSize);
   const [topFlangeGrid, setTopFlangeGrid] = useState<string[]>([]);
   const [bottomFlangeGrid, setBottomFlangeGrid] = useState<string[]>([]);
+
+  // Layer visibility state
+  const [layers, setLayers] = useState<LayerState>({
+    baseBeam: true, // Always visible
+    dimensions: true,
+    controlGrid: true,
+    conditions: true,
+    annotations: true,
+    hatching: true
+  });
 
   // Initialize web grid
   useEffect(() => {
@@ -109,6 +121,13 @@ function App() {
   const handleZoomIn = () => setElevationZoom(z => Math.min(z + commonStyles.zoom.step, commonStyles.zoom.max))
   const handleZoomOut = () => setElevationZoom(z => Math.max(z - commonStyles.zoom.step, commonStyles.zoom.min))
 
+  const handleLayerChange = (layer: keyof LayerState) => {
+    setLayers(prev => ({
+      ...prev,
+      [layer]: !prev[layer]
+    }));
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -127,7 +146,7 @@ function App() {
           overflow: 'hidden',
           position: 'relative'
         }}>
-          {/* Sidebar */}
+          {/* Left Sidebar */}
           <Box sx={{
             width: isMobile ? '100%' : (isSidebarOpen ? commonStyles.sidebar.width : commonStyles.sidebar.collapsedWidth),
             height: '100%',
@@ -141,14 +160,21 @@ function App() {
             display: isMobile && !isSidebarOpen ? 'none' : 'flex',
             flexDirection: 'column'
           }}>
-            <BeamSelector onSelect={handleBeamSelect} selectedBeam={selectedBeam} />
-            <ToolPalette 
-              selectedTool={selectedTool} 
-              onSelectTool={setSelectedTool} 
-              onZoomIn={handleZoomIn} 
-              onZoomOut={handleZoomOut} 
+            <BeamSelector 
+              onSelect={handleBeamSelect} 
+              selectedBeam={selectedBeam} 
+              showGrid={showGrid}
+              onShowGridChange={setShowGrid}
             />
           </Box>
+
+          {/* Tool Palette */}
+          <ToolPalette 
+            selectedTool={selectedTool} 
+            onSelectTool={setSelectedTool} 
+            onZoomIn={handleZoomIn} 
+            onZoomOut={handleZoomOut} 
+          />
 
           {/* Drawing Area */}
           <Box sx={{
@@ -163,20 +189,34 @@ function App() {
             <DrawingArea
               selectedBeam={selectedBeam}
               selectedTool={selectedTool}
-              webGridSize={webGridSize}
-              flangeGridSize={flangeGridSize}
+              gridSize={webGridSize}
               elevationZoom={elevationZoom}
               buffer={buffer}
               elevationHeight={elevationHeight}
               profileHeight={profileHeight}
-              setElevationHeight={setElevationHeight}
-              setProfileHeight={setProfileHeight}
               gridRows={webRows}
               gridCols={webCols}
               gridState={webGrid}
-              topFlangeGrid={topFlangeGrid}
-              bottomFlangeGrid={bottomFlangeGrid}
               onGridCellClick={handleGridCellClick}
+              showGrid={showGrid}
+              layers={layers}
+            />
+          </Box>
+
+          {/* Right Sidebar - Layer Control */}
+          <Box sx={{
+            width: commonStyles.layerControl.width,
+            height: '100%',
+            bgcolor: 'background.paper',
+            borderLeft: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <LayerControl
+              layers={layers}
+              onLayerChange={handleLayerChange}
             />
           </Box>
         </Box>

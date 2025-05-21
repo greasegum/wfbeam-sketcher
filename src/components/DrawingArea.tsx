@@ -1,19 +1,10 @@
-import { Box, Typography, Paper } from '@mui/material';
+import { Box } from '@mui/material';
 import type { BeamProperties } from '../data/beamProperties';
-import { BeamCrossSection, BeamElevation } from './BeamRenderer';
-import { useState, useMemo } from 'react';
-
-const cellStates = [
-  { key: 'intact', color: 'rgba(0,191,255,0.15)' }, // cyan
-  { key: 'corroded', color: 'rgba(255,193,7,0.25)' }, // amber
-  { key: 'section_loss', color: 'rgba(255,87,34,0.25)' }, // orange
-  { key: 'perforated', color: 'rgba(244,67,54,0.35)' }, // red
-];
-
-function getNextState(current: string) {
-  const idx = cellStates.findIndex(s => s.key === current);
-  return cellStates[(idx + 1) % cellStates.length].key;
-}
+import { PaperCanvas } from './PaperCanvas';
+import { SketchModel } from '../models/SketchModel';
+import { useEffect, useState } from 'react';
+import { commonStyles } from '../config/theme';
+import type { LayerState } from './LayerControl';
 
 interface DrawingAreaProps {
   selectedBeam?: BeamProperties;
@@ -26,7 +17,9 @@ interface DrawingAreaProps {
   gridRows: number;
   gridCols: number;
   gridState: string[][];
-  onGridCellClick: (row: number, col: number) => void;
+  onGridCellClick: (row: number, col: number, isFlange: boolean) => void;
+  showGrid: boolean;
+  layers: LayerState;
 }
 
 export function DrawingArea({
@@ -41,18 +34,43 @@ export function DrawingArea({
   gridCols,
   gridState,
   onGridCellClick,
+  showGrid,
+  layers
 }: DrawingAreaProps) {
-  // Elevation view
-  const baseScale = 10;
-  const length = 60; // inches (5 ft)
-  const elevationScale = baseScale * elevationZoom;
-  const beamHeight = selectedBeam ? selectedBeam.depth * elevationScale : 0;
-  const beamWidth = length * elevationScale;
+  const [model, setModel] = useState<SketchModel | null>(null);
 
-  // Calculate profile view dimensions
-  const profileScale = baseScale;
-  const calculatedProfileWidth = selectedBeam ? selectedBeam.flangeWidth * profileScale + buffer * 2 : 0;
-  const calculatedProfileHeight = selectedBeam ? selectedBeam.depth * profileScale + buffer * 2 : 0;
+  // Initialize or update model when beam changes
+  useEffect(() => {
+    if (!selectedBeam) {
+      setModel(null);
+      return;
+    }
+
+    const newModel = new SketchModel(selectedBeam, commonStyles.zoom.baseScale * elevationZoom);
+    newModel.initializeGrids(gridRows, gridCols);
+    setModel(newModel);
+  }, [selectedBeam, elevationZoom, gridRows, gridCols]);
+
+  if (!selectedBeam || !model) {
+    return (
+      <Box sx={{ 
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default'
+      }}>
+        <p>Select a beam to begin</p>
+      </Box>
+    );
+  }
+
+  // Calculate dimensions
+  const length = 60; // inches (5 ft)
+  const beamHeight = selectedBeam.depth * model.getScale();
+  const beamWidth = length * model.getScale();
 
   return (
     <Box sx={{ 
@@ -63,83 +81,31 @@ export function DrawingArea({
       bgcolor: 'background.default',
       overflow: 'hidden'
     }}>
-      {selectedBeam ? (
-        <Box sx={{ 
-          width: '100%', 
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-          p: 2
-        }}>
-          {/* Main elevation view */}
-          <Box sx={{ 
-            flex: 1,
-            minHeight: 0,
-            position: 'relative',
-            bgcolor: '#232526',
-            border: '2px solid #444',
-            borderRadius: 2,
-            boxShadow: 3,
-            overflow: 'auto',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-            <BeamElevation
-              beam={selectedBeam}
-              scale={elevationScale}
-              gridRows={gridRows}
-              gridCols={gridCols}
-              gridState={gridState}
-              onGridCellClick={onGridCellClick}
-            />
-          </Box>
-
-          {/* Cross section view */}
-          <Box sx={{ 
-            position: 'absolute',
-            bottom: 16,
-            left: 16,
-            width: calculatedProfileWidth,
-            height: calculatedProfileHeight,
-            bgcolor: '#232526',
-            border: '2px solid #444',
-            borderRadius: 2,
-            boxShadow: 3,
-            overflow: 'hidden',
-            zIndex: 1
-          }}>
-            <BeamCrossSection 
-              beam={selectedBeam} 
-              scale={profileScale}
-            />
-          </Box>
-        </Box>
-      ) : (
-        <Box sx={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 2
-        }}>
-          <Typography variant="h5" gutterBottom>
-            Drawing Area
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Current Tool: <b>{selectedTool}</b>
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            No beam selected
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            (Grid markup and callout tools coming soon)
-          </Typography>
-        </Box>
-      )}
+      {/* Main elevation view */}
+      <Box sx={{ 
+        flex: 1,
+        minHeight: 0,
+        position: 'relative',
+        bgcolor: '#232526',
+        border: '2px solid #444',
+        borderRadius: 2,
+        boxShadow: 3,
+        overflow: 'auto',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <PaperCanvas
+          model={model}
+          width={beamWidth + 120}
+          height={beamHeight + 120}
+          selectedTool={selectedTool}
+          isElevation={true}
+          onGridCellClick={onGridCellClick}
+          showGrid={showGrid && layers.controlGrid}
+          layers={layers}
+        />
+      </Box>
     </Box>
   );
 }

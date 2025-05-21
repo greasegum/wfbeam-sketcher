@@ -4,7 +4,7 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn'
 import ZoomOutIcon from '@mui/icons-material/ZoomOut'
 import GridOnIcon from '@mui/icons-material/GridOn'
 import BufferIcon from '@mui/icons-material/ViewInAr'
-import { commonStyles } from '../config/theme'
+import { commonStyles, scaleRatios } from '../config/theme'
 
 interface StatusBarProps {
   webGridSize: number
@@ -100,7 +100,7 @@ export function StatusBar({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 200 }}>
         <ZoomInIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
         <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
-          Zoom: {elevationZoom.toFixed(1)}x
+          Scale: {scaleRatios[elevationZoom] || `${elevationZoom}:1`}
         </Typography>
         <Slider
           size="small"
