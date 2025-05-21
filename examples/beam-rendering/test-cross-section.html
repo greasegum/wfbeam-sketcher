@@ -1,3 +1,11 @@
+<!--
+  WFBeam Sketcher - Beam Cross-Section Test Sandbox
+
+  This file is a standalone sandbox for prototyping and testing rendering and annotation features
+  (such as Paper.js-based drawing, dimensioning, and UI controls) that will be integrated into the
+  main WFBeam Sketcher application. Use this file to experiment with new features in isolation
+  before merging them into the main codebase.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,67 +14,199 @@
     <title>Beam Cross-Section Test</title>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
     <style>
-        body { margin: 0; padding: 20px; background: #f0f0f0; }
-        #canvas-container {
-            width: 800px;
-            height: 600px;
-            margin: auto;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-color: #2c3e50;
+            --background-color: #f5f6fa;
+            --card-background: #ffffff;
+            --border-radius: 8px;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            background: var(--background-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .header p {
+            color: var(--secondary-color);
+            margin: 10px 0 0;
+        }
+
+        .controls {
+            margin: 20px auto;
+            padding: 20px;
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .control-group {
+            padding: 10px;
+        }
+
+        .control-group h3 {
+            margin: 0 0 10px;
+            color: var(--primary-color);
+            font-size: 1em;
+        }
+
+        .layer-toggle, .style-selector {
+            margin: 10px 0;
+        }
+
+        select, input[type="checkbox"] {
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin: 5px 0;
+            color: var(--secondary-color);
+        }
+
+        .main-content-area {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: flex-start; /* Align items to the top */
+        }
+
+        #canvas-container {
+            width: 70%; /* Adjust width as needed */
+            max-width: 1000px;
+            height: 600px;
+            margin: 20px auto;
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
         canvas { 
             width: 100%; 
             height: 100%; 
             background: white;
         }
-        .controls {
-            margin: 20px auto;
-            width: 800px;
-            padding: 10px;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+
+        .info-panel {
+            width: 30%; /* Adjust width as needed */
+            margin: 0; /* Remove top/bottom margin if aligning next to canvas */
+            padding: 20px;
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
         }
-        .layer-toggle {
-            margin: 10px;
-            display: inline-block;
+
+        .info-panel h3 {
+            margin: 0 0 10px;
+            color: var(--primary-color);
         }
-        .style-selector {
-            margin: 10px;
-            display: inline-block;
+
+        .info-panel p {
+            margin: 5px 0;
+            color: var(--secondary-color);
+        }
+
+        .layer-toggle-group {
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            align-items: center;
         }
     </style>
 </head>
 <body>
-    <div class="controls">
-        <div class="layer-toggle">
-            <input type="checkbox" id="baseGeometry" checked>
-            <label for="baseGeometry">Base Geometry</label>
+    <div class="container">
+        <div class="header">
+            <h1>Beam Cross-Section Test</h1>
+            <p>Interactive visualization of W-beam cross-sections with dimensioning and styling options</p>
         </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="hatching" checked>
-            <label for="hatching">Hatching</label>
+
+        <div class="controls">
+            <div class="control-group">
+                <h3>Beam Selection</h3>
+                <select id="beamSelect">
+                    <option value="W12x26">W12x26</option>
+                    <option value="W14x30">W14x30</option>
+                    <option value="W16x40">W16x40</option>
+                    <option value="W18x50">W18x50</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <h3>Layer Visibility</h3>
+                <div class="layer-toggle-group">
+                    <div class="layer-toggle">
+                        <input type="checkbox" id="baseGeometry" checked>
+                        <label for="baseGeometry">Base Geometry</label>
+                    </div>
+                    <div class="layer-toggle">
+                        <input type="checkbox" id="hatching" checked>
+                        <label for="hatching">Hatching</label>
+                    </div>
+                    <div class="layer-toggle">
+                        <input type="checkbox" id="dimensions" checked>
+                        <label for="dimensions">Dimensions</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>Dimension Style</h3>
+                <div class="style-selector">
+                    <select id="dimensionStyle">
+                        <option value="base">Base Style</option>
+                        <option value="ansi">ANSI Standard</option>
+                        <option value="iso">ISO Standard</option>
+                        <option value="architectural">Architectural</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="dimensions" checked>
-            <label for="dimensions">Dimensions</label>
+
+        <div class="main-content-area">
+            <div id="canvas-container">
+                <canvas id="myCanvas" resize></canvas>
+            </div>
+
+            <div class="info-panel">
+                <h3>Beam Properties</h3>
+                <div id="beamInfo">
+                    <!-- Beam properties will be displayed here -->
+                </div>
+            </div>
         </div>
-        <div class="style-selector">
-            <select id="dimensionStyle">
-                <option value="base">Base Style</option>
-                <option value="ansi">ANSI Standard</option>
-                <option value="iso">ISO Standard</option>
-                <option value="architectural">Architectural</option>
-            </select>
-        </div>
-        <select id="beamSelect">
-            <option value="W12x26">W12x26</option>
-            <option value="W14x30">W14x30</option>
-            <option value="W16x40">W16x40</option>
-            <option value="W18x50">W18x50</option>
-        </select>
-    </div>
-    <div id="canvas-container">
-        <canvas id="myCanvas" resize></canvas>
     </div>
 
     <script type="module">
@@ -113,31 +253,78 @@
                     depth: 12.23,
                     flangeWidth: 6.49,
                     flangeThickness: 0.38,
-                    webThickness: 0.23
+                    webThickness: 0.23,
+                    weight: 26,
+                    area: 7.65,
+                    Ix: 204,
+                    Sx: 33.4,
+                    rx: 5.17,
+                    Iy: 17.3,
+                    Sy: 5.34,
+                    ry: 1.51
                 },
                 'W14x30': {
                     depth: 13.84,
                     flangeWidth: 6.73,
                     flangeThickness: 0.385,
-                    webThickness: 0.27
+                    webThickness: 0.27,
+                    weight: 30,
+                    area: 8.85,
+                    Ix: 291,
+                    Sx: 42.0,
+                    rx: 5.73,
+                    Iy: 19.6,
+                    Sy: 5.82,
+                    ry: 1.49
                 },
                 'W16x40': {
                     depth: 16.0,
                     flangeWidth: 7.0,
                     flangeThickness: 0.43,
-                    webThickness: 0.305
+                    webThickness: 0.305,
+                    weight: 40,
+                    area: 11.8,
+                    Ix: 518,
+                    Sx: 64.7,
+                    rx: 6.63,
+                    Iy: 28.9,
+                    Sy: 8.25,
+                    ry: 1.57
                 },
                 'W18x50': {
                     depth: 18.0,
                     flangeWidth: 7.5,
                     flangeThickness: 0.57,
-                    webThickness: 0.355
+                    webThickness: 0.355,
+                    weight: 50,
+                    area: 14.7,
+                    Ix: 800,
+                    Sx: 88.9,
+                    rx: 7.38,
+                    Iy: 40.1,
+                    Sy: 10.7,
+                    ry: 1.65
                 }
             };
 
             var currentBeam = beamProps['W12x26'];
             var currentStyle = baseStyle;
             var dimensionManager = new DimensionManager(paper, currentStyle);
+
+            function updateBeamInfo(beam) {
+                const info = document.getElementById('beamInfo');
+                info.innerHTML = `
+                    <p><strong>Designation:</strong> ${document.getElementById('beamSelect').value}</p>
+                    <p><strong>Depth (d):</strong> ${beam.depth}"</p>
+                    <p><strong>Flange Width (bf):</strong> ${beam.flangeWidth}"</p>
+                    <p><strong>Flange Thickness (tf):</strong> ${beam.flangeThickness}"</p>
+                    <p><strong>Web Thickness (tw):</strong> ${beam.webThickness}"</p>
+                    <p><strong>Weight:</strong> ${beam.weight} lb/ft</p>
+                    <p><strong>Area:</strong> ${beam.area} in²</p>
+                    <p><strong>Moment of Inertia (Ix):</strong> ${beam.Ix} in⁴</p>
+                    <p><strong>Section Modulus (Sx):</strong> ${beam.Sx} in³</p>
+                `;
+            }
 
             function drawBeamCrossSection(beam) {
                 // Calculate scale to fit canvas
@@ -244,8 +431,9 @@
                         { x: topLeft.x, y: topLeft.y + h },
                         'd = ' + beam.depth + '"',
                         {
-                            isChained: false,
-                            tolerance: { upper: 0.06, lower: 0.06 }
+                            strokeColor: colors.dimensions.stroke,
+                            textColor: colors.dimensions.text,
+                            strokeWidth: colors.dimensions.strokeWidth
                         }
                     );
 
@@ -255,8 +443,9 @@
                         { x: topLeft.x + w, y: topLeft.y },
                         'bf = ' + beam.flangeWidth + '"',
                         {
-                            isChained: false,
-                            tolerance: { upper: 0.125, lower: 0.125 }
+                            strokeColor: colors.dimensions.stroke,
+                            textColor: colors.dimensions.text,
+                            strokeWidth: colors.dimensions.strokeWidth
                         }
                     );
 
@@ -266,8 +455,9 @@
                         { x: center.x + tw/2, y: center.y },
                         'tw = ' + beam.webThickness + '"',
                         {
-                            isChained: false,
-                            tolerance: { upper: 0.02, lower: 0.02 }
+                            strokeColor: colors.dimensions.stroke,
+                            textColor: colors.dimensions.text,
+                            strokeWidth: colors.dimensions.strokeWidth
                         }
                     );
 
@@ -277,14 +467,18 @@
                         { x: topLeft.x + w/4, y: topLeft.y + tf },
                         'tf = ' + beam.flangeThickness + '"',
                         {
-                            isChained: false,
-                            tolerance: { upper: 0.015, lower: 0.015 }
+                            strokeColor: colors.dimensions.stroke,
+                            textColor: colors.dimensions.text,
+                            strokeWidth: colors.dimensions.strokeWidth
                         }
                     );
                 }
 
                 // Update dimension scale
                 dimensionManager.updateViewportScale(scale);
+                
+                // Update beam info panel
+                updateBeamInfo(beam);
             }
 
             // Initial draw
@@ -319,6 +513,11 @@
                         currentStyle = baseStyle;
                 }
                 dimensionManager = new DimensionManager(paper, currentStyle);
+                drawBeamCrossSection(currentBeam);
+            }
+
+            // Handle window resize
+            window.onresize = function() {
                 drawBeamCrossSection(currentBeam);
             }
 

@@ -1,5 +1,4 @@
 import { Box, Paper, Typography } from '@mui/material';
-import * as makerjs from 'makerjs';
 import type { BeamProperties } from '../data/beamProperties';
 import { colors } from '../config/theme';
 
@@ -16,8 +15,8 @@ interface BeamRendererProps {
   onGridCellClick?: (row: number, col: number, isFlange: boolean) => void;
 }
 
-// Utility to generate Maker.js model for a W-beam cross section
-function getIBeamMakerModel(beam: BeamProperties, scale: number, filletRadius = 0.25) {
+// Utility to generate Paper.js path for a W-beam cross section
+function getIBeamPath(beam: BeamProperties, scale: number, filletRadius = 0.25) {
   // All units in px
   const w = beam.flangeWidth * scale;
   const h = beam.depth * scale;
@@ -25,47 +24,66 @@ function getIBeamMakerModel(beam: BeamProperties, scale: number, filletRadius = 
   const tf = beam.flangeThickness * scale;
   const x0 = 20, y0 = 20; // margin
 
-  // Build the I-beam as a Maker.js model
-  const model: makerjs.IModel = {
-    models: {
-      topFlange: new makerjs.models.Rectangle(w, tf),
-      botFlange: new makerjs.models.Rectangle(w, tf),
-      web: new makerjs.models.Rectangle(tw, h - 2 * tf)
-    },
-    origin: [x0, y0]
-  };
+  // Create the path
+  const path = new paper.Path();
+  path.strokeColor = new paper.Color(colors.beam.stroke);
+  path.strokeWidth = colors.beam.strokeWidth;
+  path.closed = true;
 
-  // Move bottom flange and web to correct positions
-  makerjs.model.moveRelative(model.models!.botFlange, [0, h - tf]);
-  makerjs.model.moveRelative(model.models!.web, [(w - tw) / 2, tf]);
+  // Start from top left, go clockwise
+  path.moveTo(new paper.Point(x0, y0)); // Top left
+  path.lineTo(new paper.Point(x0 + w, y0)); // Top right
+  path.lineTo(new paper.Point(x0 + w, y0 + tf)); // Top flange bottom right
+  path.lineTo(new paper.Point(x0 + (w + tw)/2, y0 + tf)); // Web right
+  path.lineTo(new paper.Point(x0 + (w + tw)/2, y0 + h - tf)); // Web right bottom
+  path.lineTo(new paper.Point(x0 + w, y0 + h - tf)); // Bottom flange top right
+  path.lineTo(new paper.Point(x0 + w, y0 + h)); // Bottom right
+  path.lineTo(new paper.Point(x0, y0 + h)); // Bottom left
+  path.lineTo(new paper.Point(x0, y0 + h - tf)); // Bottom flange top left
+  path.lineTo(new paper.Point(x0 + (w - tw)/2, y0 + h - tf)); // Web left bottom
+  path.lineTo(new paper.Point(x0 + (w - tw)/2, y0 + tf)); // Web left top
+  path.lineTo(new paper.Point(x0, y0 + tf)); // Top flange bottom left
+  path.closePath();
 
-  return model;
+  return path;
 }
 
-// Utility to generate Maker.js model for a W-beam elevation
-function getBeamElevationMakerModel(beam: BeamProperties, length: number, scale: number) {
+// Utility to generate Paper.js path for a W-beam elevation
+function getBeamElevationPath(beam: BeamProperties, length: number, scale: number) {
   // All units in px
   const w = length * scale;
   const h = beam.depth * scale;
   const tf = beam.flangeThickness * scale;
+  const x0 = 20, y0 = 20; // margin
 
-  // Create paths for the beam outline and flanges only
-  const model: makerjs.IModel = {
-    paths: {
-      // Outer rectangle using lines
-      outlineTop: new makerjs.paths.Line([0, 0], [w, 0]),
-      outlineRight: new makerjs.paths.Line([w, 0], [w, h]),
-      outlineBottom: new makerjs.paths.Line([w, h], [0, h]),
-      outlineLeft: new makerjs.paths.Line([0, h], [0, 0]),
-      // Top flange line
-      topFlangeLine: new makerjs.paths.Line([0, tf], [w, tf]),
-      // Bottom flange line
-      bottomFlangeLine: new makerjs.paths.Line([0, h - tf], [w, h - tf])
-    },
-    origin: [20, 20]
-  };
+  // Create the path
+  const path = new paper.Path();
+  path.strokeColor = new paper.Color(colors.beam.stroke);
+  path.strokeWidth = colors.beam.strokeWidth;
 
-  return model;
+  // Create beam outline
+  path.moveTo(new paper.Point(x0, y0));
+  path.lineTo(new paper.Point(x0 + w, y0));
+  path.lineTo(new paper.Point(x0 + w, y0 + h));
+  path.lineTo(new paper.Point(x0, y0 + h));
+  path.closePath();
+
+  // Add flange lines
+  const topFlangeLine = new paper.Path.Line({
+    from: new paper.Point(x0, y0 + tf),
+    to: new paper.Point(x0 + w, y0 + tf),
+    strokeColor: new paper.Color(colors.beam.stroke),
+    strokeWidth: colors.beam.strokeWidth
+  });
+
+  const bottomFlangeLine = new paper.Path.Line({
+    from: new paper.Point(x0, y0 + h - tf),
+    to: new paper.Point(x0 + w, y0 + h - tf),
+    strokeColor: new paper.Color(colors.beam.stroke),
+    strokeWidth: colors.beam.strokeWidth
+  });
+
+  return { outline: path, topFlange: topFlangeLine, bottomFlange: bottomFlangeLine };
 }
 
 // Utility to create dimension text and lines
@@ -82,21 +100,18 @@ function createOrdinateDimension(x: number, scale: number) {
 export function BeamCrossSection({ beam, scale }: BeamRendererProps) {
   const svgW = beam.flangeWidth * scale + 40;
   const svgH = beam.depth * scale + 40;
-  const model = getIBeamMakerModel(beam, scale);
-  const svg = makerjs.exporter.toSVG(model, {
-    stroke: colors.beam.stroke,
-    strokeWidth: `${colors.beam.strokeWidth}`
-  });
+  const path = getIBeamPath(beam, scale);
+  const svg = path.exportSVG({ asString: true });
 
   return (
     <Box sx={{ 
       width: '100%',
       height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
       justifyContent: 'center',
-        bgcolor: 'background.paper',
+      bgcolor: 'background.paper',
       p: 1
     }}>
       <Box
@@ -275,11 +290,8 @@ export function BeamElevation({
   }
 
   // Maker.js for beam outline with high contrast
-  const model = getBeamElevationMakerModel(beam, length, scale);
-  const svg = makerjs.exporter.toSVG(model, {
-    stroke: colors.beam.stroke,
-    strokeWidth: `${colors.beam.strokeWidth}`
-  });
+  const model = getBeamElevationPath(beam, length, scale);
+  const svg = model.outline.exportSVG({ asString: true });
 
   return (
     <Box sx={{ 

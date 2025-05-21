@@ -1,4 +1,3 @@
-import * as makerjs from 'makerjs';
 import type { BeamProperties } from '../data/beamProperties';
 import { colors } from '../config/theme';
 
@@ -55,6 +54,48 @@ export class SketchModel {
       webGridSize: 1.0,
       flangeGridSize: 2.0
     };
+  }
+
+  // Get base geometry for export
+  getBaseGeometry(): paper.Path {
+    if (!this.paperScope) throw new Error('Paper.js scope not initialized');
+    
+    const { depth, flangeWidth, flangeThickness, webThickness } = this.beam;
+    const w = this.length * this.scale;
+    const h = depth * this.scale;
+    const tf = flangeThickness * this.scale;
+    const tw = webThickness * this.scale;
+    const x0 = 20, y0 = 20; // margin
+
+    // Create the path
+    const path = new this.paperScope.Path();
+    path.strokeColor = new this.paperScope.Color(colors.beam.stroke);
+    path.strokeWidth = colors.beam.strokeWidth;
+    path.closed = true;
+
+    // Create beam outline
+    path.moveTo(new this.paperScope.Point(x0, y0));
+    path.lineTo(new this.paperScope.Point(x0 + w, y0));
+    path.lineTo(new this.paperScope.Point(x0 + w, y0 + h));
+    path.lineTo(new this.paperScope.Point(x0, y0 + h));
+    path.closePath();
+
+    // Add flange lines
+    const topFlangeLine = new this.paperScope.Path.Line({
+      from: new this.paperScope.Point(x0, y0 + tf),
+      to: new this.paperScope.Point(x0 + w, y0 + tf),
+      strokeColor: new this.paperScope.Color(colors.beam.stroke),
+      strokeWidth: colors.beam.strokeWidth
+    });
+
+    const bottomFlangeLine = new this.paperScope.Path.Line({
+      from: new this.paperScope.Point(x0, y0 + h - tf),
+      to: new this.paperScope.Point(x0 + w, y0 + h - tf),
+      strokeColor: new this.paperScope.Color(colors.beam.stroke),
+      strokeWidth: colors.beam.strokeWidth
+    });
+
+    return path;
   }
 
   // Create beam geometry using Paper.js
@@ -242,25 +283,6 @@ export class SketchModel {
 
     this.beamGroup = group;
     return group;
-  }
-
-  // Export to Maker.js for printing
-  getBaseGeometry(): makerjs.IModel {
-    const w = this.length * this.scale;
-    const h = this.beam.depth * this.scale;
-    const tf = this.beam.flangeThickness * this.scale;
-
-    return {
-      paths: {
-        outlineTop: new makerjs.paths.Line([0, 0], [w, 0]),
-        outlineRight: new makerjs.paths.Line([w, 0], [w, h]),
-        outlineBottom: new makerjs.paths.Line([w, h], [0, h]),
-        outlineLeft: new makerjs.paths.Line([0, h], [0, 0]),
-        topFlangeLine: new makerjs.paths.Line([0, tf], [w, tf]),
-        bottomFlangeLine: new makerjs.paths.Line([0, h - tf], [w, h - tf])
-      },
-      origin: [20, 20]
-    };
   }
 
   // Grid state management
