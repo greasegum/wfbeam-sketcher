@@ -48,6 +48,14 @@ export function PaperCanvas({
       const canvas = canvasRef.current;
       paper.setup(canvas);
       model.setPaperScope(paper);
+      
+      console.log('PaperCanvas setup:', {
+        canvas,
+        width,
+        height,
+        isElevation,
+        beam: model.getBeam()
+      });
 
       // Get beam and scale early since we'll need them
       const beam = model.getBeam();
@@ -338,6 +346,7 @@ export function PaperCanvas({
         position: 'absolute',
         top: 0,
         left: 0,
+        backgroundColor: 'transparent',
         pointerEvents: ['grid', 'callout'].includes(selectedTool) ? 'auto' : 'none'
       }}
     />

@@ -162,81 +162,47 @@ export class SketchModel {
     const h = depth * this.scale;
     const tf = flangeThickness * this.scale;
     const tw = webThickness * this.scale;
-    const r = this.filletRadius * this.scale; // Fillet radius
 
-    // Create the outline path
+    // Create the outline path - simplified I-beam shape without fillets
     const outline = new this.paperScope.Path();
     outline.strokeColor = new this.paperScope.Color(colors.beam.stroke);
     outline.strokeWidth = colors.beam.strokeWidth;
+    outline.fillColor = null;  // No fill, just stroke
     outline.closed = true;
 
     // Start from top left, go clockwise
     outline.moveTo(new this.paperScope.Point(0, 0)); // Top left
     outline.lineTo(new this.paperScope.Point(w, 0)); // Top right
     outline.lineTo(new this.paperScope.Point(w, tf)); // Top flange bottom right
-
-    // Add fillet at top right web intersection
-    const topRightFillet = new this.paperScope.Path.Arc({
-      from: new this.paperScope.Point(w, tf),
-      through: new this.paperScope.Point((w + tw) / 2, tf + r),
-      to: new this.paperScope.Point((w + tw) / 2, tf + r)
-    });
-    outline.join(topRightFillet);
-
-    // Web right side
-    outline.lineTo(new this.paperScope.Point((w + tw) / 2, h - tf - r));
-
-    // Add fillet at bottom right web intersection
-    const bottomRightFillet = new this.paperScope.Path.Arc({
-      from: new this.paperScope.Point((w + tw) / 2, h - tf - r),
-      through: new this.paperScope.Point((w + tw) / 2, h - tf),
-      to: new this.paperScope.Point(w, h - tf)
-    });
-    outline.join(bottomRightFillet);
-
+    outline.lineTo(new this.paperScope.Point((w + tw) / 2, tf)); // Web top right
+    outline.lineTo(new this.paperScope.Point((w + tw) / 2, h - tf)); // Web bottom right
+    outline.lineTo(new this.paperScope.Point(w, h - tf)); // Bottom flange top right
     outline.lineTo(new this.paperScope.Point(w, h)); // Bottom right
     outline.lineTo(new this.paperScope.Point(0, h)); // Bottom left
     outline.lineTo(new this.paperScope.Point(0, h - tf)); // Bottom flange top left
-
-    // Add fillet at bottom left web intersection
-    const bottomLeftFillet = new this.paperScope.Path.Arc({
-      from: new this.paperScope.Point(0, h - tf),
-      through: new this.paperScope.Point((w - tw) / 2, h - tf),
-      to: new this.paperScope.Point((w - tw) / 2, h - tf - r)
-    });
-    outline.join(bottomLeftFillet);
-
-    // Web left side
-    outline.lineTo(new this.paperScope.Point((w - tw) / 2, tf + r));
-
-    // Add fillet at top left web intersection
-    const topLeftFillet = new this.paperScope.Path.Arc({
-      from: new this.paperScope.Point((w - tw) / 2, tf + r),
-      through: new this.paperScope.Point((w - tw) / 2, tf),
-      to: new this.paperScope.Point(0, tf)
-    });
-    outline.join(topLeftFillet);
-
-    outline.lineTo(new this.paperScope.Point(0, 0)); // Back to start
+    outline.lineTo(new this.paperScope.Point((w - tw) / 2, h - tf)); // Web bottom left
+    outline.lineTo(new this.paperScope.Point((w - tw) / 2, tf)); // Web top left
+    outline.lineTo(new this.paperScope.Point(0, tf)); // Top flange bottom left
     outline.closePath();
 
     group.addChild(outline);
 
-    // Center the cross-section in the view
-    group.position = viewRect.center;
+    // Position the cross-section centered in the view
+    group.bounds.center = viewRect.center;
 
     // Add centerlines
     const verticalCenterline = new this.paperScope.Path.Line({
-      from: new this.paperScope.Point(w/2, -h/4),
-      to: new this.paperScope.Point(w/2, h + h/4),
+      from: [viewRect.center.x, viewRect.top],
+      to: [viewRect.center.x, viewRect.bottom],
       strokeColor: new this.paperScope.Color(colors.beam.stroke),
       strokeWidth: colors.beam.strokeWidth * 0.5,
       dashArray: [5, 5]
     });
+    group.addChild(verticalCenterline);
 
     const horizontalCenterline = new this.paperScope.Path.Line({
-      from: new this.paperScope.Point(-w/4, h/2),
-      to: new this.paperScope.Point(w + w/4, h/2),
+      from: [viewRect.left, viewRect.center.y],
+      to: [viewRect.right, viewRect.center.y],
       strokeColor: new this.paperScope.Color(colors.beam.stroke),
       strokeWidth: colors.beam.strokeWidth * 0.5,
       dashArray: [5, 5]

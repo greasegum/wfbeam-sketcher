@@ -95,16 +95,24 @@ export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChang
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          p: 2
+          p: 2,
+          position: 'relative'
         }}>
-          <PaperCanvas
-            model={model}
-            width={selectedBeam.flangeWidth * model.getScale() + 80}
-            height={selectedBeam.depth * model.getScale() + 80}
-            selectedTool=""
-            isElevation={false}
-            showGrid={showGrid}
-          />
+          <Box sx={{
+            width: selectedBeam.flangeWidth * model.getScale() + 80,
+            height: selectedBeam.depth * model.getScale() + 80,
+            position: 'relative',
+            bgcolor: '#1a1a1a'
+          }}>
+            <PaperCanvas
+              model={model}
+              width={selectedBeam.flangeWidth * model.getScale() + 80}
+              height={selectedBeam.depth * model.getScale() + 80}
+              selectedTool=""
+              isElevation={false}
+              showGrid={showGrid}
+            />
+          </Box>
         </Box>
       )}
     </Paper>
