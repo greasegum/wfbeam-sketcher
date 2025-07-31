@@ -51,14 +51,18 @@ export function PhaserBeamSketch({
       },
       callbacks: {
         postBoot: (game) => {
+          console.log('Phaser game postBoot');
           // Enable multi-touch
           game.input.addPointer(2);
           
-          // Set initial beam if provided
-          const scene = game.scene.getScene('BeamSketchScene') as BeamSketchScene;
-          if (selectedBeam && scene) {
-            scene.setBeam(selectedBeam);
-          }
+          // Set initial beam if provided after a delay to ensure scene is ready
+          setTimeout(() => {
+            const scene = game.scene.getScene('BeamSketchScene') as BeamSketchScene;
+            console.log('Got scene:', scene, 'selectedBeam:', selectedBeam);
+            if (selectedBeam && scene) {
+              scene.setBeam(selectedBeam);
+            }
+          }, 100);
           
           onReady?.();
         }

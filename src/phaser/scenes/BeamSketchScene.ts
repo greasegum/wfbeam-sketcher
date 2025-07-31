@@ -30,6 +30,8 @@ export class BeamSketchScene extends Phaser.Scene {
   }
 
   create() {
+    console.log('BeamSketchScene.create() called');
+    
     // Create layers in order (back to front)
     this.backgroundLayer = this.add.container(0, 0);
     this.beamLayer = this.add.container(0, 0);
@@ -45,11 +47,16 @@ export class BeamSketchScene extends Phaser.Scene {
     // Set up camera
     this.cameras.main.setBackgroundColor('#232526');
     
+    // Add a test rectangle to verify rendering works
+    const testRect = this.add.rectangle(400, 300, 200, 100, 0xff0000);
+    console.log('Added test rectangle:', testRect);
+    
     // Set up input
     this.setupInput();
     
     // Initial render if beam is set
     if (this.beam) {
+      console.log('Initial beam set, rendering:', this.beam);
       this.renderBeam();
     }
   }
@@ -96,14 +103,22 @@ export class BeamSketchScene extends Phaser.Scene {
   }
 
   setBeam(beam: BeamProperties) {
+    console.log('BeamSketchScene.setBeam() called with:', beam);
     this.beam = beam;
     if (this.scene.isActive()) {
+      console.log('Scene is active, rendering beam');
       this.renderBeam();
+    } else {
+      console.log('Scene is not active yet');
     }
   }
 
   private renderBeam() {
-    if (!this.beam || !this.beamRenderer || !this.gridSystem) return;
+    console.log('renderBeam() called', { beam: this.beam, beamRenderer: this.beamRenderer, gridSystem: this.gridSystem });
+    if (!this.beam || !this.beamRenderer || !this.gridSystem) {
+      console.error('Missing required components for rendering');
+      return;
+    }
     
     // Clear existing content
     this.beamLayer.removeAll(true);
@@ -179,8 +194,21 @@ export class BeamSketchScene extends Phaser.Scene {
     contours.forEach(contour => {
       const graphics = this.add.graphics();
       graphics.fillStyle(contour.color, 0.7);
-      graphics.strokePath(contour.path, 2, contour.strokeColor);
-      graphics.fillPath(contour.path);
+      graphics.lineStyle(2, contour.strokeColor);
+      
+      // Draw the path manually since Phaser paths work differently
+      const points = contour.path.getPoints();
+      if (points.length > 0) {
+        graphics.beginPath();
+        graphics.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+          graphics.lineTo(points[i].x, points[i].y);
+        }
+        graphics.closePath();
+        graphics.fillPath();
+        graphics.strokePath();
+      }
+      
       this.sectionLossLayer.add(graphics);
     });
   }

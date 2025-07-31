@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import { useRef, useEffect, useState } from 'react';
 import type { BeamProperties } from '../data/beamProperties';
 import { PhaserBeamSketch } from '../phaser/PhaserBeamSketch';
 import type { LayerState } from './LayerControl';
@@ -16,6 +17,25 @@ export function PhaserDrawingArea({
   showGrid,
   layers
 }: PhaserDrawingAreaProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setDimensions({
+          width: Math.floor(rect.width),
+          height: Math.floor(rect.height)
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
   if (!selectedBeam) {
     return (
       <Box sx={{ 
@@ -41,21 +61,26 @@ export function PhaserDrawingArea({
       bgcolor: 'background.default',
       overflow: 'hidden'
     }}>
-      <Box sx={{ 
-        flex: 1,
-        minHeight: 0,
-        position: 'relative',
-        bgcolor: '#232526',
-        border: '2px solid #444',
-        borderRadius: 2,
-        boxShadow: 3,
-        overflow: 'hidden'
-      }}>
-        <PhaserBeamSketch
-          width={window.innerWidth - 600} // Account for sidebars
-          height={window.innerHeight - 100} // Account for status bar
-          selectedBeam={selectedBeam}
-        />
+      <Box 
+        ref={containerRef}
+        sx={{ 
+          flex: 1,
+          minHeight: 0,
+          position: 'relative',
+          bgcolor: '#232526',
+          border: '2px solid #444',
+          borderRadius: 2,
+          boxShadow: 3,
+          overflow: 'hidden'
+        }}
+      >
+        {dimensions.width > 0 && dimensions.height > 0 && (
+          <PhaserBeamSketch
+            width={dimensions.width}
+            height={dimensions.height}
+            selectedBeam={selectedBeam}
+          />
+        )}
       </Box>
     </Box>
   );
