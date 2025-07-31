@@ -47,10 +47,6 @@ export class BeamSketchScene extends Phaser.Scene {
     // Set up camera
     this.cameras.main.setBackgroundColor('#232526');
     
-    // Add a test rectangle to verify rendering works
-    const testRect = this.add.rectangle(400, 300, 200, 100, 0xff0000);
-    console.log('Added test rectangle:', testRect);
-    
     // Set up input
     this.setupInput();
     
@@ -165,10 +161,17 @@ export class BeamSketchScene extends Phaser.Scene {
       }
     );
     
+    // Add a test shape to verify coordinates
+    const testGraphics = this.add.graphics();
+    testGraphics.fillStyle(0x00ff00, 0.5);
+    testGraphics.fillRect(0, 0, 100, 100);
+    console.log('Added test green square at 0,0');
+    
     // Center camera on content
     const totalHeight = elevationY + this.beam.depth * this.scale + margin;
     const totalWidth = elevationX + this.beamLength * this.scale + margin;
     this.cameras.main.centerOn(totalWidth / 2, totalHeight / 2);
+    console.log('Camera centered at:', totalWidth / 2, totalHeight / 2);
   }
 
   private onGridCellClick(row: number, col: number, isFlange: boolean) {

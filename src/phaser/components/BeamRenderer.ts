@@ -20,6 +20,7 @@ export class BeamRenderer {
     scale: number,
     container: Phaser.GameObjects.Container
   ) {
+    console.log('BeamRenderer.renderCrossSection called', { beam, x, y, scale });
     const graphics = this.scene.add.graphics();
     
     // Calculate dimensions
@@ -73,6 +74,7 @@ export class BeamRenderer {
     scale: number,
     container: Phaser.GameObjects.Container
   ) {
+    console.log('BeamRenderer.renderElevation called', { beam, length, x, y, scale });
     const graphics = this.scene.add.graphics();
     
     // Calculate dimensions

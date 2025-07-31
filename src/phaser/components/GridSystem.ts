@@ -128,7 +128,7 @@ export class GridSystem {
     const cell = this.scene.add.rectangle(x, y, width, height);
     cell.setOrigin(0, 0);
     cell.setStrokeStyle(0.5, 0x333333, 0.3);
-    cell.setInteractive({ useHandCursor: true });
+    cell.setInteractive();
     
     // Hover effects
     cell.on('pointerover', () => {

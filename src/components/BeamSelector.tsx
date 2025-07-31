@@ -10,9 +10,10 @@ interface BeamSelectorProps {
   selectedBeam?: BeamProperties;
   showGrid: boolean;
   onShowGridChange: (show: boolean) => void;
+  usePhaser?: boolean;
 }
 
-export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChange }: BeamSelectorProps) {
+export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChange, usePhaser = false }: BeamSelectorProps) {
   const [model, setModel] = useState<SketchModel | null>(null);
 
   // Initialize or update model when beam changes
@@ -86,7 +87,7 @@ export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChang
       </Box>
 
       {/* Cross Section View */}
-      {selectedBeam && model && (
+      {selectedBeam && model && !usePhaser && (
         <Box sx={{ 
           height: 200,
           borderTop: 1,
@@ -113,6 +114,23 @@ export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChang
               showGrid={showGrid}
             />
           </Box>
+        </Box>
+      )}
+      {/* Simple cross section display for Phaser mode */}
+      {selectedBeam && usePhaser && (
+        <Box sx={{ 
+          height: 200,
+          borderTop: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.default',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: 2
+        }}>
+          <Typography variant="body2" color="text.secondary">
+            {selectedBeam.designation} - {selectedBeam.depth}" × {selectedBeam.flangeWidth}"
+          </Typography>
         </Box>
       )}
     </Paper>

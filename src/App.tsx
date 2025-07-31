@@ -167,6 +167,7 @@ function App() {
               selectedBeam={selectedBeam} 
               showGrid={showGrid}
               onShowGridChange={setShowGrid}
+              usePhaser={usePhaser}
             />
           </Box>
 
