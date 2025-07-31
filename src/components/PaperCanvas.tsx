@@ -5,6 +5,7 @@ import { colors } from '../config/theme';
 import type { LayerState } from './LayerControl';
 import { DimensionManager } from '../managers/DimensionManager';
 import { baseStyle } from '../config/dimensionStyles';
+import { ContourGenerator } from '../utils/contourGenerator';
 
 interface PaperCanvasProps {
   model: SketchModel;
@@ -312,9 +313,78 @@ export function PaperCanvas({
       }
 
       // Draw condition markup
-      if (layers.conditions) {
+      if (layers.conditions && isElevation) {
         conditionLayer.activate();
-        // ... condition markup drawing code ...
+        
+        // Generate contours for section loss visualization
+        const contourGen = new ContourGenerator(paper);
+        const gridState = model.getGridState();
+        const beamBounds = beamGroup.bounds;
+        
+        // Generate contours for different condition levels
+        const conditionColors = [
+          colors.grid.web.minor,
+          colors.grid.web.major,
+          colors.grid.web.full
+        ];
+        
+        for (const conditionColor of conditionColors) {
+          // Web contours
+          const webContours = contourGen.generateContours(
+            gridState.webGrid,
+            conditionColor,
+            {
+              cellSize: gridState.webGridSize * scale,
+              smoothing: 0.6,
+              offset: {
+                x: beamBounds.left,
+                y: beamBounds.top + beam.flangeThickness * scale
+              }
+            }
+          );
+          
+          webContours.forEach(contour => {
+            contour.fillColor = new paper.Color(conditionColor);
+            contour.fillColor.alpha = 0.7;
+            contour.strokeColor = new paper.Color(conditionColor);
+            contour.strokeWidth = 1;
+            conditionLayer.addChild(contour);
+          });
+          
+          // Top flange contours
+          const topFlangeContours = contourGen.generateFlangeContours(
+            gridState.topFlangeGrid,
+            true,
+            beamBounds,
+            beam.flangeThickness * scale,
+            gridState.flangeGridSize * scale
+          );
+          
+          topFlangeContours.forEach(contour => {
+            contour.fillColor = new paper.Color(conditionColor);
+            contour.fillColor.alpha = 0.7;
+            contour.strokeColor = new paper.Color(conditionColor);
+            contour.strokeWidth = 1;
+            conditionLayer.addChild(contour);
+          });
+          
+          // Bottom flange contours
+          const bottomFlangeContours = contourGen.generateFlangeContours(
+            gridState.bottomFlangeGrid,
+            false,
+            beamBounds,
+            beam.flangeThickness * scale,
+            gridState.flangeGridSize * scale
+          );
+          
+          bottomFlangeContours.forEach(contour => {
+            contour.fillColor = new paper.Color(conditionColor);
+            contour.fillColor.alpha = 0.7;
+            contour.strokeColor = new paper.Color(conditionColor);
+            contour.strokeWidth = 1;
+            conditionLayer.addChild(contour);
+          });
+        }
       }
       conditionLayer.visible = layers.conditions;
 

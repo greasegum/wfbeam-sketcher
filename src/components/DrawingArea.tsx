@@ -17,6 +17,10 @@ interface DrawingAreaProps {
   gridRows: number;
   gridCols: number;
   gridState: string[][];
+  topFlangeGrid: string[];
+  bottomFlangeGrid: string[];
+  webGridSize: number;
+  flangeGridSize: number;
   onGridCellClick: (row: number, col: number, isFlange: boolean) => void;
   showGrid: boolean;
   layers: LayerState;
@@ -33,6 +37,10 @@ export function DrawingArea({
   gridRows,
   gridCols,
   gridState,
+  topFlangeGrid,
+  bottomFlangeGrid,
+  webGridSize,
+  flangeGridSize,
   onGridCellClick,
   showGrid,
   layers
@@ -50,6 +58,17 @@ export function DrawingArea({
     newModel.initializeGrids(gridRows, gridCols);
     setModel(newModel);
   }, [selectedBeam, elevationZoom, gridRows, gridCols]);
+
+  // Update model's grid state when grid changes
+  useEffect(() => {
+    if (model) {
+      if (gridState) model.updateWebGrid(gridState);
+      if (topFlangeGrid) model.updateTopFlangeGrid(topFlangeGrid);
+      if (bottomFlangeGrid) model.updateBottomFlangeGrid(bottomFlangeGrid);
+      if (webGridSize) model.updateWebGridSize(webGridSize);
+      if (flangeGridSize) model.updateFlangeGridSize(flangeGridSize);
+    }
+  }, [model, gridState, topFlangeGrid, bottomFlangeGrid, webGridSize, flangeGridSize]);
 
   if (!selectedBeam || !model) {
     return (
@@ -96,6 +115,7 @@ export function DrawingArea({
         alignItems: 'center'
       }}>
         <PaperCanvas
+          key={`canvas-${JSON.stringify(gridState).substring(0, 20)}`}
           model={model}
           width={beamWidth + 120}
           height={beamHeight + 120}

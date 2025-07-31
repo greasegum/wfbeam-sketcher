@@ -263,6 +263,26 @@ export class SketchModel {
       .fill(colors.grid.flange.intact);
   }
 
+  updateWebGrid(newGrid: string[][]) {
+    this.gridState.webGrid = newGrid;
+  }
+
+  updateTopFlangeGrid(newGrid: string[]) {
+    this.gridState.topFlangeGrid = newGrid;
+  }
+
+  updateBottomFlangeGrid(newGrid: string[]) {
+    this.gridState.bottomFlangeGrid = newGrid;
+  }
+
+  updateWebGridSize(size: number) {
+    this.gridState.webGridSize = size;
+  }
+
+  updateFlangeGridSize(size: number) {
+    this.gridState.flangeGridSize = size;
+  }
+
   setGridCell(row: number, col: number, isFlange: boolean, state: string) {
     if (isFlange) {
       if (row === 0) {

@@ -197,6 +197,10 @@ function App() {
               gridRows={webRows}
               gridCols={webCols}
               gridState={webGrid}
+              topFlangeGrid={topFlangeGrid}
+              bottomFlangeGrid={bottomFlangeGrid}
+              webGridSize={webGridSize}
+              flangeGridSize={flangeGridSize}
               onGridCellClick={handleGridCellClick}
               showGrid={showGrid}
               layers={layers}
