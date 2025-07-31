@@ -22,10 +22,11 @@ export const colors = {
   },
   divider: '#333',
   beam: {
-    stroke: '#ffffff',      // High contrast white for beam outlines
+    stroke: '#000000',      // Black outlines like in the reference
     strokeWidth: 1.5,       // Thicker lines for better visibility
+    fill: '#90EE90',        // Light pastel green for intact steel (matches reference)
     hatching: {
-      stroke: 'rgba(255,255,255,0.3)', // Semi-transparent white for hatching
+      stroke: 'rgba(0,0,0,0.2)', // Semi-transparent black for hatching
       strokeWidth: 0.5,
       spacing: 3,           // Pixels between hatch lines
       angle: 45            // Degrees for hatching
@@ -46,16 +47,16 @@ export const colors = {
       strokeWidth: 0.5,
     },
     web: {
-      intact: 'rgba(0,191,255,0.05)',    // Almost invisible when intact
-      corroded: 'rgba(255,180,0,0.8)',   // Bright amber/gold
-      section_loss: 'rgba(255,60,0,0.8)', // Bright orange-red
-      perforated: 'rgba(220,20,60,0.8)',  // Crimson red
+      intact: 'rgba(0,0,0,0)',           // Transparent - beam fill shows through
+      minor: '#FFB6C1',                  // Light pink for minor rust/corrosion
+      major: '#FF69B4',                  // Hot pink for major section loss
+      full: '#DC143C',                   // Crimson for full section loss/holes
     },
     flange: {
-      intact: 'rgba(0,191,255,0.05)',    // Almost invisible when intact
-      corroded: 'rgba(255,180,0,0.8)',   // Bright amber/gold
-      section_loss: 'rgba(255,60,0,0.8)', // Bright orange-red
-      perforated: 'rgba(220,20,60,0.8)',  // Crimson red
+      intact: 'rgba(0,0,0,0)',           // Transparent - beam fill shows through
+      minor: '#FFB6C1',                  // Light pink for minor rust/corrosion
+      major: '#FF69B4',                  // Hot pink for major section loss
+      full: '#DC143C',                   // Crimson for full section loss/holes
     }
   },
 };

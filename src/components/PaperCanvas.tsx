@@ -158,9 +158,10 @@ export function PaperCanvas({
           });
         }
 
-        // Create interactive grid overlay
+        // Create interactive grid overlay - must be on top for clicks
         const overlayLayer = new paper.Layer();
         overlayLayer.activate();
+        overlayLayer.bringToFront(); // Ensure it's on top for interaction
         
         const webHeight = (beam.depth - 2 * beam.flangeThickness) * scale;
         const webTop = beam.flangeThickness * scale;
@@ -242,6 +243,7 @@ export function PaperCanvas({
 
         // Setup interaction tools
         const gridTool = new paper.Tool();
+        gridTool.activate(); // Activate the tool!
         
         // Track last highlighted cell to prevent unnecessary updates
         let lastHighlightedCell: paper.Path | null = null;
@@ -261,6 +263,21 @@ export function PaperCanvas({
               hitResult.item.strokeColor = new paper.Color(colors.primary.main);
               hitResult.item.strokeWidth = 2;
               lastHighlightedCell = hitResult.item;
+            }
+          }
+        };
+
+        gridTool.onMouseDown = (event: paper.ToolEvent) => {
+          console.log('Grid tool click', { selectedTool, point: event.point });
+          if (selectedTool === 'grid') {
+            const hitResult = overlayLayer.hitTest(event.point);
+            console.log('Hit test result:', hitResult);
+            if (hitResult?.item && hitResult.item.data) {
+              const { row, col, isFlange } = hitResult.item.data;
+              console.log('Grid cell clicked:', { row, col, isFlange });
+              onGridCellClick?.(row, col, isFlange);
+              // Force redraw
+              paper.view.draw();
             }
           }
         };

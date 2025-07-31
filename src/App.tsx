@@ -75,9 +75,9 @@ function App() {
       const isTopFlange = row === 0;
       const states = [
         colors.grid.flange.intact,
-        colors.grid.flange.corroded,
-        colors.grid.flange.section_loss,
-        colors.grid.flange.perforated
+        colors.grid.flange.minor,
+        colors.grid.flange.major,
+        colors.grid.flange.full
       ];
       
       if (isTopFlange) {
@@ -101,9 +101,9 @@ function App() {
         const next = prev.map(arr => arr.slice());
         const states = [
           colors.grid.web.intact,
-          colors.grid.web.corroded,
-          colors.grid.web.section_loss,
-          colors.grid.web.perforated
+          colors.grid.web.minor,
+          colors.grid.web.major,
+          colors.grid.web.full
         ];
         const idx = states.indexOf(prev[row][col]);
         next[row][col] = states[(idx + 1) % states.length];

@@ -109,12 +109,13 @@ export class SketchModel {
     const tf = flangeThickness * this.scale;
     const tw = webThickness * this.scale;
 
-    // Create beam outline
+    // Create beam outline with fill
     const outline = new this.paperScope.Path.Rectangle({
       point: [0, 0],
       size: [w, h],
       strokeColor: new this.paperScope.Color(colors.beam.stroke),
-      strokeWidth: colors.beam.strokeWidth
+      strokeWidth: colors.beam.strokeWidth,
+      fillColor: new this.paperScope.Color(colors.beam.fill)
     });
     group.addChild(outline);
 
@@ -167,7 +168,7 @@ export class SketchModel {
     const outline = new this.paperScope.Path();
     outline.strokeColor = new this.paperScope.Color(colors.beam.stroke);
     outline.strokeWidth = colors.beam.strokeWidth;
-    outline.fillColor = null;  // No fill, just stroke
+    outline.fillColor = new this.paperScope.Color(colors.beam.fill);  // Pastel green fill
     outline.closed = true;
 
     // Start from top left, go clockwise
@@ -312,7 +313,7 @@ export class SketchModel {
     });
 
     // Add to or create new contour if state is section loss or perforation
-    if (state === colors.grid.web.section_loss || state === colors.grid.web.perforated) {
+    if (state === colors.grid.web.minor || state === colors.grid.web.major || state === colors.grid.web.full) {
       const adjacentContour = this.findAdjacentContour(row, col, isFlange, state);
       if (adjacentContour) {
         adjacentContour.cells.push({ row, col, state, isFlange });
@@ -320,7 +321,7 @@ export class SketchModel {
         this.contours.push({
           id: `contour-${this.contours.length + 1}`,
           cells: [{ row, col, state, isFlange }],
-          type: state === colors.grid.web.perforated ? 'perforation' : 'section_loss'
+          type: state === colors.grid.web.full ? 'perforation' : 'section_loss'
         });
       }
     }
@@ -358,7 +359,7 @@ export class SketchModel {
       contour.path = new this.paperScope.Path({
         segments: points,
         closed: true,
-        strokeColor: contour.type === 'perforation' ? colors.grid.web.perforated : colors.grid.web.section_loss,
+        strokeColor: contour.type === 'perforation' ? colors.grid.web.full : colors.grid.web.major,
         strokeWidth: 2,
         fillColor: new this.paperScope.Color({
           hue: contour.type === 'perforation' ? 0 : 30,
