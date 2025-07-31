@@ -3,6 +3,7 @@ import { Box, Container, CssBaseline, ThemeProvider, useMediaQuery } from '@mui/
 import { BeamSelector } from './components/BeamSelector'
 import { ToolPalette } from './components/ToolPalette'
 import { DrawingArea } from './components/DrawingArea'
+import { PhaserDrawingArea } from './components/PhaserDrawingArea'
 import { StatusBar } from './components/StatusBar'
 import { LayerControl, type LayerState } from './components/LayerControl'
 import type { BeamProperties } from './data/beamProperties'
@@ -21,6 +22,7 @@ function App() {
   const [profileHeight, setProfileHeight] = useState<number>(320)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [showGrid, setShowGrid] = useState(false)
+  const [usePhaser, setUsePhaser] = useState(true) // Default to Phaser for better performance
 
   // Responsive breakpoints
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -75,9 +77,9 @@ function App() {
       const isTopFlange = row === 0;
       const states = [
         colors.grid.flange.intact,
-        colors.grid.flange.corroded,
-        colors.grid.flange.section_loss,
-        colors.grid.flange.perforated
+        colors.grid.flange.minor,
+        colors.grid.flange.major,
+        colors.grid.flange.full
       ];
       
       if (isTopFlange) {
@@ -101,9 +103,9 @@ function App() {
         const next = prev.map(arr => arr.slice());
         const states = [
           colors.grid.web.intact,
-          colors.grid.web.corroded,
-          colors.grid.web.section_loss,
-          colors.grid.web.perforated
+          colors.grid.web.minor,
+          colors.grid.web.major,
+          colors.grid.web.full
         ];
         const idx = states.indexOf(prev[row][col]);
         next[row][col] = states[(idx + 1) % states.length];
@@ -165,6 +167,7 @@ function App() {
               selectedBeam={selectedBeam} 
               showGrid={showGrid}
               onShowGridChange={setShowGrid}
+              usePhaser={usePhaser}
             />
           </Box>
 
@@ -186,21 +189,34 @@ function App() {
             overflow: 'hidden',
             position: 'relative'
           }}>
-            <DrawingArea
-              selectedBeam={selectedBeam}
-              selectedTool={selectedTool}
-              gridSize={webGridSize}
-              elevationZoom={elevationZoom}
-              buffer={buffer}
-              elevationHeight={elevationHeight}
-              profileHeight={profileHeight}
-              gridRows={webRows}
-              gridCols={webCols}
-              gridState={webGrid}
-              onGridCellClick={handleGridCellClick}
-              showGrid={showGrid}
-              layers={layers}
-            />
+            {usePhaser ? (
+              <PhaserDrawingArea
+                selectedBeam={selectedBeam}
+                selectedTool={selectedTool}
+                showGrid={showGrid}
+                layers={layers}
+              />
+            ) : (
+              <DrawingArea
+                selectedBeam={selectedBeam}
+                selectedTool={selectedTool}
+                gridSize={webGridSize}
+                elevationZoom={elevationZoom}
+                buffer={buffer}
+                elevationHeight={elevationHeight}
+                profileHeight={profileHeight}
+                gridRows={webRows}
+                gridCols={webCols}
+                gridState={webGrid}
+                topFlangeGrid={topFlangeGrid}
+                bottomFlangeGrid={bottomFlangeGrid}
+                webGridSize={webGridSize}
+                flangeGridSize={flangeGridSize}
+                onGridCellClick={handleGridCellClick}
+                showGrid={showGrid}
+                layers={layers}
+              />
+            )}
           </Box>
 
           {/* Right Sidebar - Layer Control */}

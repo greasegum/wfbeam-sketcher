@@ -5,6 +5,7 @@ import { colors } from '../config/theme';
 import type { LayerState } from './LayerControl';
 import { DimensionManager } from '../managers/DimensionManager';
 import { baseStyle } from '../config/dimensionStyles';
+import { ContourGenerator } from '../utils/contourGenerator';
 
 interface PaperCanvasProps {
   model: SketchModel;
@@ -48,6 +49,14 @@ export function PaperCanvas({
       const canvas = canvasRef.current;
       paper.setup(canvas);
       model.setPaperScope(paper);
+      
+      console.log('PaperCanvas setup:', {
+        canvas,
+        width,
+        height,
+        isElevation,
+        beam: model.getBeam()
+      });
 
       // Get beam and scale early since we'll need them
       const beam = model.getBeam();
@@ -149,9 +158,10 @@ export function PaperCanvas({
           });
         }
 
-        // Create interactive grid overlay
+        // Create interactive grid overlay - must be on top for clicks
         const overlayLayer = new paper.Layer();
         overlayLayer.activate();
+        overlayLayer.bringToFront(); // Ensure it's on top for interaction
         
         const webHeight = (beam.depth - 2 * beam.flangeThickness) * scale;
         const webTop = beam.flangeThickness * scale;
@@ -233,6 +243,7 @@ export function PaperCanvas({
 
         // Setup interaction tools
         const gridTool = new paper.Tool();
+        gridTool.activate(); // Activate the tool!
         
         // Track last highlighted cell to prevent unnecessary updates
         let lastHighlightedCell: paper.Path | null = null;
@@ -252,6 +263,21 @@ export function PaperCanvas({
               hitResult.item.strokeColor = new paper.Color(colors.primary.main);
               hitResult.item.strokeWidth = 2;
               lastHighlightedCell = hitResult.item;
+            }
+          }
+        };
+
+        gridTool.onMouseDown = (event: paper.ToolEvent) => {
+          console.log('Grid tool click', { selectedTool, point: event.point });
+          if (selectedTool === 'grid') {
+            const hitResult = overlayLayer.hitTest(event.point);
+            console.log('Hit test result:', hitResult);
+            if (hitResult?.item && hitResult.item.data) {
+              const { row, col, isFlange } = hitResult.item.data;
+              console.log('Grid cell clicked:', { row, col, isFlange });
+              onGridCellClick?.(row, col, isFlange);
+              // Force redraw
+              paper.view.draw();
             }
           }
         };
@@ -304,9 +330,78 @@ export function PaperCanvas({
       }
 
       // Draw condition markup
-      if (layers.conditions) {
+      if (layers.conditions && isElevation) {
         conditionLayer.activate();
-        // ... condition markup drawing code ...
+        
+        // Generate contours for section loss visualization
+        const contourGen = new ContourGenerator(paper);
+        const gridState = model.getGridState();
+        const beamBounds = beamGroup.bounds;
+        
+        // Generate contours for different condition levels
+        const conditionColors = [
+          colors.grid.web.minor,
+          colors.grid.web.major,
+          colors.grid.web.full
+        ];
+        
+        for (const conditionColor of conditionColors) {
+          // Web contours
+          const webContours = contourGen.generateContours(
+            gridState.webGrid,
+            conditionColor,
+            {
+              cellSize: gridState.webGridSize * scale,
+              smoothing: 0.6,
+              offset: {
+                x: beamBounds.left,
+                y: beamBounds.top + beam.flangeThickness * scale
+              }
+            }
+          );
+          
+          webContours.forEach(contour => {
+            contour.fillColor = new paper.Color(conditionColor);
+            contour.fillColor.alpha = 0.7;
+            contour.strokeColor = new paper.Color(conditionColor);
+            contour.strokeWidth = 1;
+            conditionLayer.addChild(contour);
+          });
+          
+          // Top flange contours
+          const topFlangeContours = contourGen.generateFlangeContours(
+            gridState.topFlangeGrid,
+            true,
+            beamBounds,
+            beam.flangeThickness * scale,
+            gridState.flangeGridSize * scale
+          );
+          
+          topFlangeContours.forEach(contour => {
+            contour.fillColor = new paper.Color(conditionColor);
+            contour.fillColor.alpha = 0.7;
+            contour.strokeColor = new paper.Color(conditionColor);
+            contour.strokeWidth = 1;
+            conditionLayer.addChild(contour);
+          });
+          
+          // Bottom flange contours
+          const bottomFlangeContours = contourGen.generateFlangeContours(
+            gridState.bottomFlangeGrid,
+            false,
+            beamBounds,
+            beam.flangeThickness * scale,
+            gridState.flangeGridSize * scale
+          );
+          
+          bottomFlangeContours.forEach(contour => {
+            contour.fillColor = new paper.Color(conditionColor);
+            contour.fillColor.alpha = 0.7;
+            contour.strokeColor = new paper.Color(conditionColor);
+            contour.strokeWidth = 1;
+            conditionLayer.addChild(contour);
+          });
+        }
       }
       conditionLayer.visible = layers.conditions;
 
@@ -338,6 +433,7 @@ export function PaperCanvas({
         position: 'absolute',
         top: 0,
         left: 0,
+        backgroundColor: 'transparent',
         pointerEvents: ['grid', 'callout'].includes(selectedTool) ? 'auto' : 'none'
       }}
     />

@@ -10,9 +10,10 @@ interface BeamSelectorProps {
   selectedBeam?: BeamProperties;
   showGrid: boolean;
   onShowGridChange: (show: boolean) => void;
+  usePhaser?: boolean;
 }
 
-export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChange }: BeamSelectorProps) {
+export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChange, usePhaser = false }: BeamSelectorProps) {
   const [model, setModel] = useState<SketchModel | null>(null);
 
   // Initialize or update model when beam changes
@@ -86,7 +87,37 @@ export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChang
       </Box>
 
       {/* Cross Section View */}
-      {selectedBeam && model && (
+      {selectedBeam && model && !usePhaser && (
+        <Box sx={{ 
+          height: 200,
+          borderTop: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.default',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: 2,
+          position: 'relative'
+        }}>
+          <Box sx={{
+            width: selectedBeam.flangeWidth * model.getScale() + 80,
+            height: selectedBeam.depth * model.getScale() + 80,
+            position: 'relative',
+            bgcolor: '#1a1a1a'
+          }}>
+            <PaperCanvas
+              model={model}
+              width={selectedBeam.flangeWidth * model.getScale() + 80}
+              height={selectedBeam.depth * model.getScale() + 80}
+              selectedTool=""
+              isElevation={false}
+              showGrid={showGrid}
+            />
+          </Box>
+        </Box>
+      )}
+      {/* Simple cross section display for Phaser mode */}
+      {selectedBeam && usePhaser && (
         <Box sx={{ 
           height: 200,
           borderTop: 1,
@@ -97,14 +128,9 @@ export function BeamSelector({ onSelect, selectedBeam, showGrid, onShowGridChang
           alignItems: 'center',
           p: 2
         }}>
-          <PaperCanvas
-            model={model}
-            width={selectedBeam.flangeWidth * model.getScale() + 80}
-            height={selectedBeam.depth * model.getScale() + 80}
-            selectedTool=""
-            isElevation={false}
-            showGrid={showGrid}
-          />
+          <Typography variant="body2" color="text.secondary">
+            {selectedBeam.designation} - {selectedBeam.depth}" × {selectedBeam.flangeWidth}"
+          </Typography>
         </Box>
       )}
     </Paper>
